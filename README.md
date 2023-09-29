@@ -21,7 +21,7 @@ What it does
 
 ```bash
 # clone project
-git clone https://github.com/YourGithubName/your-repo-name
+git clone https://github.com/nothingg24/Face-Filter
 cd your-repo-name
 
 # [OPTIONAL] create conda environment
