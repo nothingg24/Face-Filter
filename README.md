@@ -22,7 +22,7 @@ What it does
 ```bash
 # clone project
 git clone https://github.com/nothingg24/Face-Filter
-cd your-repo-name
+cd Face-Filter
 
 # [OPTIONAL] create conda environment
 conda create -n myenv python=3.9
