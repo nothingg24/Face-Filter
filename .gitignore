@@ -152,3 +152,18 @@ configs/local/default.yaml
 
 # Aim logging
 .aim
+outputs/2023-08-25/11-06-08/.hydra/config.yaml
+outputs/2023-08-25/11-06-08/.hydra/hydra.yaml
+outputs/2023-08-25/11-06-08/.hydra/overrides.yaml
+outputs/2023-08-25/11-07-00/.hydra/config.yaml
+outputs/2023-08-25/11-07-00/.hydra/hydra.yaml
+outputs/2023-08-25/11-07-00/.hydra/overrides.yaml
+outputs/2023-08-25/11-08-49/.hydra/config.yaml
+outputs/2023-08-25/11-08-49/.hydra/hydra.yaml
+outputs/2023-08-25/11-08-49/.hydra/overrides.yaml
+outputs/2023-09-29/08-15-55/.hydra/config.yaml
+outputs/2023-09-29/08-15-55/.hydra/hydra.yaml
+outputs/2023-09-29/08-15-55/.hydra/overrides.yaml
+outputs/2023-09-29/08-19-54/.hydra/config.yaml
+outputs/2023-09-29/08-19-54/.hydra/hydra.yaml
+outputs/2023-09-29/08-19-54/.hydra/overrides.yaml
