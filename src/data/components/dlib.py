@@ -210,6 +210,8 @@ if __name__ == '__main__':
   sample = dlib[0]
   print(np.array(sample['image']).shape, sample['landmark'].shape)
   # dlib.visual_keypoints(sample['image'], sample['landmark'])
-  img = dlib.image_annotation(sample['image'], sample['landmark'])
-  img.save('test.jpg')
+  # img = dlib.image_annotation(sample['image'], sample['landmark'])
+  crop_image = sample['image']
+  crop_image.save('crop.jpg')
+  # img.save('test.jpg')
   # dlib.visualize(0)
