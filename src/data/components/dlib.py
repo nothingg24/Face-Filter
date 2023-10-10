@@ -167,36 +167,6 @@ class DLIB(Dataset):
       plt.savefig('test.png')
       plt.show()
 
-  # def visualize(self, index):
-  #   if index < 0 or index >= len(self):
-  #     raise IndexError(f"Index {index} is out of range")
-
-  #   if self.data_dir is None:
-  #     self.prepare_data()
-  #   if self.img_labels is None:
-  #     self.prepare_labels()
-
-  #   sample = self[index]
-  #   if sample['image'] is not None and sample['landmark'] is not None:
-  #     # print(type(sample['image']), type(sample['landmark']))
-  #     print(sample['image'].shape, sample['landmark'].shape)
-  #     image = sample['image'].permute(1,2,0)
-  #     print(image.shape)
-  #     landmark = sample['landmark']
-  #     # print(type(landmark[0][0]))
-  #     bbox = sample['bbox']
-  #     fig, ax = plt.subplots()
-  #     ax.axis('off')
-  #     ax.imshow(image)
-  #     for i in range(68):
-  #         # x = int(landmark[i][0]) - int(bbox['left'])
-  #         # y = int(landmark[i][1]) - int(bbox['top'])
-  #         # ax.add_patch(Circle((x, y), radius=2, color='red'))
-  #         ax.add_patch(Circle((landmark[i][0], landmark[i][1]), radius=2, color='red'))
-  #     top, left, width, height = int(bbox['top']), int(bbox['left']), int(bbox['box_width']), int(bbox['box_height'])
-  #     ax.add_patch(Rectangle((left, top), width, height, fill=False, edgecolor='blue'))
-  #     plt.show()
-
   @staticmethod
   def image_annotation(image: Image, keypoints: np.ndarray)->Image:
      draw = ImageDraw.Draw(image)
@@ -207,11 +177,11 @@ class DLIB(Dataset):
 
 if __name__ == '__main__':
   dlib = DLIB()
-  sample = dlib[0]
+  sample = dlib[20]
   print(np.array(sample['image']).shape, sample['landmark'].shape)
-  # dlib.visual_keypoints(sample['image'], sample['landmark'])
+  dlib.visual_keypoints(sample['image'], sample['landmark'])
   # img = dlib.image_annotation(sample['image'], sample['landmark'])
-  crop_image = sample['image']
-  crop_image.save('crop.jpg')
+  # crop_image = sample['image']
+  # crop_image.save('crop.jpg')
   # img.save('test.jpg')
   # dlib.visualize(0)

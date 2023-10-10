@@ -99,10 +99,10 @@ def main(cfg: DictConfig):
     print(type(transform))
     transform_dlib = TransformDLIB(DLIB(), transform=transform)
     image, landmark = transform_dlib[20]
-    # img = DLIB.image_annotation(Image.fromarray(image.numpy(), 'RGB'), landmark)
+    img = DLIB.image_annotation(Image.fromarray(image.numpy(), 'RGB'), landmark)
     img = transform_dlib.tensor_annotation(image, landmark)
-    img.save('test.jpg')
+    # img.save('test.jpg')
     print(image.shape, landmark.shape)
-    DLIB.visual_keypoints(image, landmark)
+    # DLIB.visual_keypoints(image, landmark)
 if __name__ == "__main__":
     main()
