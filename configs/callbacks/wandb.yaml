@@ -1,3 +1,3 @@
-wandb_logger:
+wandb:
   _target_: src.callbacks.wandb.WandbCallback
   img_path: 'IMG_0494.jpg'
