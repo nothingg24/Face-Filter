@@ -4,6 +4,7 @@ defaults:
   - model_summary
   - rich_progress_bar
   - _self_
+  - wandb_logger
 
 model_checkpoint:
   dirpath: ${paths.output_dir}/checkpoints
