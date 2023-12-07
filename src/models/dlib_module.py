@@ -54,20 +54,23 @@ def draw_batch(images, targets, preds) -> torch.Tensor:
     # set an empty list
     images_to_save = []
     
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    images = images.to(device)
-    targets = targets.to(device)
-    preds = preds.to(device)
+    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # images = images.to(device)
+    # targets = targets.to(device)
+    # preds = preds.to(device)
 
     # loop through each sample in batch
     for i, t, p in zip(images, targets, preds):
         # get size of x
-        i = i.cpu().permute(1, 2, 0).numpy() * 255
+        # i = i.cpu().permute(1, 2, 0).numpy() * 255
+        i = i.permute(1, 2, 0) * 255
         height, width, _ = i.shape
 
         # denormalize landmarks -> pixel coordinates
-        t = (t.cpu()) * np.array([width, height])
-        p = (p.cpu()) * np.array([width, height])
+        # t = (t.cpu()) * np.array([width, height])
+        # p = (p.cpu()) * np.array([width, height])
+        t = t * torch.tensor([width, height])
+        p = p * torch.tensor([width, height])
 
         # draw landmarks on cropped image
         annotated_image = annotate_image(Image.fromarray(i.astype(np.uint8)), t, p)
