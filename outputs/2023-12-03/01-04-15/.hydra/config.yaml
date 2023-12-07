@@ -1,0 +1,22 @@
+_target_: src.models.dlib_module.DLIBLitModule
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 1.0e-05
+  weight_decay: 0.0
+scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  _partial_: true
+  mode: min
+  factor: 0.1
+  patience: 10
+net:
+  _target_: src.models.components.finetune_model.FinetuneModel
+  checkpoint_file: logs/train/runs/2023-12-01_17-58-12/checkpoints/last.ckpt
+  model:
+    _target_: src.models.components.simple_cnn.SimpleCNN
+    model_name: resnet18
+    weights: DEFAULT
+    output_shape:
+    - 68
+    - 2

@@ -1,9 +1,81 @@
 from typing import Any
 
-import torch
+import torch, os
 from lightning import LightningModule
 from torchmetrics import MinMetric, MeanMetric
 from torchmetrics.regression import MeanAbsoluteError
+import torchvision, wandb, pyrootutils
+import numpy as np
+from PIL import ImageDraw, Image
+
+# find root of this file
+path = pyrootutils.find_root(search_from=__file__, indicator=".project-root")
+
+# set up output path for drawed batch
+outputs_path = path / "test_outputs"
+
+if not os.path.exists(outputs_path):
+    os.makedirs(outputs_path)
+
+def draw_batch(images, targets, preds) -> torch.Tensor:
+    # helper function
+    def denormalize(images, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) -> torch.Tensor:
+        """Reverse COLOR transform"""
+        # clone: make a copy
+        # permute: [batch, 3, H, W] -> [3, H, W, batch]
+        tmp = images.clone().permute(1, 2, 3, 0)
+
+        # denormalize
+        for t, m, s in zip(tmp, mean, std):
+            t.mul_(s).add_(m)
+
+        # clamp: limit value to [0, 1]
+        # permute: [3, H, W, batch] -> [batch, 3, H, W]
+        return torch.clamp(tmp, 0, 1).permute(3, 0, 1, 2)
+    
+    def annotate_image(image, targets, preds):
+        """Draw target & pred landmarks on image"""
+        # create an ImageDraw object
+        draw = ImageDraw.Draw(image)
+
+        # draw target_landmarks on image (green)
+        for x, y in targets:
+            draw.ellipse([(x-2, y-2), (x+2, y+2)], fill=(0, 255, 0))
+
+        # draw pred_landmarks on image (red)
+        for x, y in preds:
+            draw.ellipse([(x-2, y-2), (x+2, y+2)], fill=(255, 0, 0))
+
+        return image
+    
+    # denormalize
+    images = denormalize(images)
+
+    # set an empty list
+    images_to_save = []
+    
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    images = images.to(device)
+    targets = targets.to(device)
+    preds = preds.to(device)
+
+    # loop through each sample in batch
+    for i, t, p in zip(images, targets, preds):
+        # get size of x
+        i = i.cpu().permute(1, 2, 0).numpy() * 255
+        height, width, _ = i.shape
+
+        # denormalize landmarks -> pixel coordinates
+        t = (t.cpu()) * np.array([width, height])
+        p = (p.cpu()) * np.array([width, height])
+
+        # draw landmarks on cropped image
+        annotated_image = annotate_image(Image.fromarray(i.astype(np.uint8)), t, p)
+
+        # save drawed cropped image
+        images_to_save.append(torchvision.transforms.ToTensor()(annotated_image))
+
+    return torch.stack(images_to_save)
 
 class DLIBLitModule(LightningModule):
     """Example of LightningModule for MNIST classification.
@@ -49,6 +121,9 @@ class DLIBLitModule(LightningModule):
 
         # for tracking least so far validation error
         self.val_err_least = MinMetric()
+        
+        # to make use of all the outputs from each validation_step()
+        self.validation_step_outputs = []
 
     def forward(self, x: torch.Tensor):
         return self.net(x)
@@ -65,10 +140,10 @@ class DLIBLitModule(LightningModule):
         preds = self.forward(x)
         loss = self.criterion(preds, y)
         # preds = torch.argmax(logits, dim=1)
-        return loss, preds, y
+        return loss, preds, y, x
 
     def training_step(self, batch: Any, batch_idx: int):
-        loss, preds, targets = self.model_step(batch)
+        loss, preds, targets, _ = self.model_step(batch)
 
         # update and log metrics
         self.train_loss(loss)
@@ -85,13 +160,17 @@ class DLIBLitModule(LightningModule):
         pass
 
     def validation_step(self, batch: Any, batch_idx: int):
-        loss, preds, targets = self.model_step(batch)
+        loss, preds, targets, images = self.model_step(batch)
 
         # update and log metrics
         self.val_loss(loss)
         self.val_err(preds, targets)
         self.log("val/loss", self.val_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("val/err", self.val_err, on_step=False, on_epoch=True, prog_bar=True)
+        
+        # save image, targets and preds to draw batch in on_validation_epoch_end
+        self.validation_step_outputs.append({"image": images, "targets": targets, "preds": preds})
+
 
         return {"loss": loss, "preds": preds, "targets": targets}
 
@@ -101,9 +180,25 @@ class DLIBLitModule(LightningModule):
         # log `val_err_least` as a value through `.compute()` method, instead of as a metric object
         # otherwise metric would be reset by lightning after each epoch
         self.log("val/err_least", self.val_err_least.compute(), prog_bar=True)
+        
+        # get the result of the first batch of validation epoch
+        first_val_batch_result = self.validation_step_outputs[0]
+        x = first_val_batch_result["image"]
+        y = first_val_batch_result["targets"]
+        y_hat = first_val_batch_result["preds"]
+
+        # draw the first batch & save it
+        annotated_batch = draw_batch(x, y, y_hat)
+        torchvision.utils.save_image(annotated_batch, outputs_path / "val_end.png")
+        
+        # log the first batch
+        wandb.log({"annotated_image": wandb.Image(annotated_batch)})
+        
+        # free memory & prepare for the next validation epoch
+        self.validation_step_outputs.clear()
 
     def test_step(self, batch: Any, batch_idx: int):
-        loss, preds, targets = self.model_step(batch)
+        loss, preds, targets, _ = self.model_step(batch)
 
         # update and log metrics
         self.test_loss(loss)
@@ -117,7 +212,7 @@ class DLIBLitModule(LightningModule):
         pass
 
     def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = None):
-        _, preds, _ = self.model_step(batch)
+        _, preds, _, _ = self.model_step(batch)
         return preds
     
     def configure_optimizers(self):
