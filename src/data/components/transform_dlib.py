@@ -40,7 +40,7 @@ class TransformDLIB(Dataset):
         landmark = transform['keypoints']
         # print(type(landmark), landmark)
 
-        landmark = landmark / np.array([image.shape[2], image.shape[1]]) # W, H
+        landmark = landmark / np.array([image.shape[2], image.shape[1]]) - 0.5 # W, H [-0.5, 0.5]
         # landmark = np.array(landmark)
         # for i in range(landmark.shape[0]):
         #     landmark[i][0] = landmark[i][0] / image.shape[2]
@@ -65,7 +65,7 @@ class TransformDLIB(Dataset):
         saved_imgs = []
         for img, keypoint in zip(images, keypoints):
             img = img.permute(1, 2, 0).numpy() * 255 # (H, W, C)
-            keypoint = keypoint * np.array([img.shape[1], img.shape[0]]) #W, H
+            keypoint = (keypoint + 0.5) * np.array([img.shape[1], img.shape[0]]) #W, H
             img = DLIB.image_annotation(Image.fromarray(img.astype(np.uint8)), keypoint)
             saved_imgs.append(ToTensor()(img))
         return torch.stack(saved_imgs)
@@ -83,7 +83,7 @@ class TransformDLIB(Dataset):
         
         image = denormalize(image)
         image = image.permute(1, 2, 0).numpy() * 255
-        keypoint = keypoint * np.array([image.shape[1], image.shape[0]]) #W, H
+        keypoint = (keypoint + 0.5) * np.array([image.shape[1], image.shape[0]]) #W, H
         # print(keypoint)
         DLIB.visual_keypoints(Image.fromarray(image.astype(np.uint8), 'RGB'), keypoint)
         image = DLIB.image_annotation(Image.fromarray(image.astype(np.uint8), 'RGB'), keypoint)

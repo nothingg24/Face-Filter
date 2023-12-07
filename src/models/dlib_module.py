@@ -69,11 +69,15 @@ def draw_batch(images, targets, preds) -> torch.Tensor:
         # denormalize landmarks -> pixel coordinates
         # t = (t.cpu()) * np.array([width, height])
         # p = (p.cpu()) * np.array([width, height])
-        t = t * torch.tensor([width, height])
-        p = p * torch.tensor([width, height])
+        device = t.device
+        t = (t + 0.5) * torch.tensor([width, height], device=device)
+        device = p.device
+        p = (p + 0.5) * torch.tensor([width, height], device=device)
 
         # draw landmarks on cropped image
-        annotated_image = annotate_image(Image.fromarray(i.astype(np.uint8)), t, p)
+        # annotated_image = annotate_image(Image.fromarray(i.astype(np.uint8)), t, p)
+        i = torchvision.transforms.functional.to_pil_image(i.to(torch.uint8).permute(2, 0, 1))
+        annotated_image = annotate_image(i, t, p)
 
         # save drawed cropped image
         images_to_save.append(torchvision.transforms.ToTensor()(annotated_image))

@@ -136,7 +136,7 @@ class DLIBDataModule(LightningDataModule):
         fig = plt.figure(figsize=(20, 20))
         for i in range(len(images)):
             image = images[i].permute(1, 2, 0).numpy() * 255
-            keypoint = keypoints[i] * np.array([image.shape[1], image.shape[0]]) #W, H
+            keypoint = (keypoints[i] + 0.5) * np.array([image.shape[1], image.shape[0]]) #W, H
             ax = fig.add_subplot(8, 8, i+1, xticks=[], yticks=[])
             x_values = [x for x, y in keypoint]
             y_values = [y for x, y in keypoint]

@@ -9,7 +9,7 @@ defaults:
   - data/transform_val: default.yaml
   - model: dlib.yaml
   - callbacks: default.yaml
-  - logger: wandb # set logger here or use command line (e.g. `python train.py logger=tensorboard`)
+  - logger:  wandb # set logger here or use command line (e.g. `python train.py logger=tensorboard`) null
   - trainer: default.yaml
   - paths: default.yaml
   - extras: default.yaml
