@@ -17,7 +17,7 @@ from torchvision.models import list_models, get_model, get_weight
 class SimpleCNN(nn.Module):
     def __init__(
             self,
-            model_name: str = "resnet18",
+            model_name: str = "resnet18", # resnet50
             weights: str = "DEFAULT",
             output_shape: list = [68, 2]):
         super().__init__()
