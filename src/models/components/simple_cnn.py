@@ -23,11 +23,12 @@ class SimpleCNN(nn.Module):
         super().__init__()
 
         backbone = get_model(name=model_name, weights=weights)
+        backbone.avgpool = nn.AdaptiveMaxPool2d(output_size=(1, 1))
         
-        for param in backbone.parameters():
-            param.requires_grad = False
-        for param in backbone.layer4.parameters():
-            param.requires_grad = True
+        # for param in backbone.parameters():
+        #     param.requires_grad = False
+        # for param in backbone.layer4.parameters():
+        #     param.requires_grad = True
         supported = False
         if hasattr(backbone, 'fc'):
             num_ftrs = backbone.fc.in_features

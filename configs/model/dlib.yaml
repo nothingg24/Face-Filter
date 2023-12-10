@@ -1,10 +1,10 @@
 _target_: src.models.dlib_module.DLIBLitModule
 
 optimizer:
-  _target_: torch.optim.Adam
+  _target_: torch.optim.AdamW
   _partial_: true
   lr: 0.001 # 0.00001
-  weight_decay: 0.0
+  weight_decay: 0.0 # 0.01
 
 scheduler:
   _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
@@ -25,3 +25,7 @@ net:
   #   model_name: resnet18
   #   weights: DEFAULT
   #   output_shape: [68, 2]
+  # _target_: src.models.components.convnext.SimpleConvnext
+  # model_name: convnext_small #tiny/small
+  # weights: DEFAULT
+  # output_shape: [68, 2]
