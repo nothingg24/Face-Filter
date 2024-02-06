@@ -29,7 +29,7 @@ class SimpleConvnext(nn.Module):
         self.features = nn.Sequential(*layers)
         # for param in self.features.parameters():
         #     param.requires_grad = False
-        self.pool = nn.AdaptiveMaxPool2d(output_size=1)
+        # self.pool = nn.AdaptiveMaxPool2d(output_size=1)
         self.classifier = nn.Sequential(
             nn.Linear(768, 512),
             nn.GELU(),

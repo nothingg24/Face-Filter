@@ -231,6 +231,8 @@ class DLIBLitModule(LightningModule):
         """
         optimizer = self.hparams.optimizer(params=self.parameters())
         if self.hparams.scheduler is not None:
+            # schedulers = [partial_scheduler(optimizer) for partial_scheduler in self.hparams.scheduler["schedulers"]]
+            # scheduler = torch.optim.lr_scheduler.SequentialLR(optimizer, schedulers, milestones=self.hparams.scheduler["milestones"])
             scheduler = self.hparams.scheduler(optimizer=optimizer)
             return {
                 "optimizer": optimizer,

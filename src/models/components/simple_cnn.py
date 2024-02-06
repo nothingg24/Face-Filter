@@ -22,8 +22,8 @@ class SimpleCNN(nn.Module):
             output_shape: list = [68, 2]):
         super().__init__()
 
-        backbone = get_model(name=model_name, weights=weights)
-        backbone.avgpool = nn.AdaptiveMaxPool2d(output_size=(1, 1))
+        backbone = get_model(name=model_name, weights=None)
+        # backbone.avgpool = nn.AdaptiveMaxPool2d(output_size=(1, 1))
         
         # for param in backbone.parameters():
         #     param.requires_grad = False
@@ -33,16 +33,12 @@ class SimpleCNN(nn.Module):
         if hasattr(backbone, 'fc'):
             num_ftrs = backbone.fc.in_features
             backbone.fc = nn.Linear(num_ftrs, output_shape[0] * output_shape[1])
-            # for p in backbone.fc.parameters():
-            #     p.requires_grad = True
             supported = True
         elif hasattr(backbone, 'heads'):
             heads = getattr(backbone, 'heads')
             if hasattr(heads, 'head'):
                 num_ftrs = backbone.heads.head.in_features
                 backbone.heads.head = nn.Linear(num_ftrs, output_shape[0] * output_shape[1])
-                # for p in backbone.heads.head.parameters():
-                #     p.requires_grad = True
                 supported = True
 
         if not supported:

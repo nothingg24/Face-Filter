@@ -3,8 +3,8 @@ _target_: src.models.dlib_module.DLIBLitModule
 optimizer:
   _target_: torch.optim.AdamW
   _partial_: true
-  lr: 0.001 # 0.00001
-  weight_decay: 0.0 # 0.01
+  lr: 0.0001 # 0.00001/0.0001/0.001
+  weight_decay: 0.01 # 0.01
 
 scheduler:
   _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
@@ -12,12 +12,39 @@ scheduler:
   mode: min
   factor: 0.1
   patience: 10
+  # _target_: torch.optim.lr_scheduler.SequentialLR
+  # _partial_: true
+  # milestones: [50]
+  # schedulers:
+  #   - _partial_: true
+  #   - _target_: torch.optim.lr_scheduler.LinearLR
+  #     _partial_: true
+  #     start_factor: 0.1
+  #     end_factor: 5.0
+  #     total_iters: 50
+  #   - _target_: torch.optim.lr_scheduler.MultiStepLR
+  #     _partial_: true
+  #     milestones: [79, 89]
+  #     gamma: 0.5
+  #   - _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  #     _partial_: true
+  #     mode: min
+  #     factor: 0.1
+  #     patience: 10
 
 net:
-  _target_: src.models.components.simple_cnn.SimpleCNN
-  model_name: resnet18 #resnet50
-  weights: DEFAULT
+  # _target_: src.models.components.simple_cnn.SimpleCNN
+  # model_name: resnet18 #resnet50
+  # weights: DEFAULT
+  # output_shape: [68, 2]
+  _target_: src.models.components.mobilenet.MobileNet
+  model_name: mobilenet_v3_large
+  weights: IMAGENET1K_V2
   output_shape: [68, 2]
+  # _target_: src.models.components.swin.Swin
+  # model_name: swin_v2_t
+  # weights: DEFAULT
+  # output_shape: [68, 2]
   # _target_: src.models.components.finetune_model.FinetuneModel
   # checkpoint_file: logs/train/runs/2023-12-01_17-58-12/checkpoints/last.ckpt
   # model:

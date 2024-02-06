@@ -28,5 +28,13 @@ transforms:
   - _target_: albumentations.augmentations.transforms.RandomBrightnessContrast
   - _target_: albumentations.AdvancedBlur
   - _target_: albumentations.augmentations.transforms.Sharpen
+  - _target_: albumentations.augmentations.transforms.PixelDropout
+  - _target_: albumentations.augmentations.dropout.channel_dropout.ChannelDropout
+  - _target_: albumentations.augmentations.dropout.cutout.Cutout  #albumentations.augmentations.dropout.coarse_dropout.CoarseDropout
+    num_holes: 10 #max_holes
+    max_h_size: 10 #max_height
+    max_w_size: 10 #max_width
+    fill_value: 0
+    p: 0.5
   - _target_: albumentations.augmentations.transforms.Normalize
   - _target_: albumentations.pytorch.transforms.ToTensorV2
