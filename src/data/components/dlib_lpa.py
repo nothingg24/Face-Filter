@@ -17,7 +17,7 @@ class DLIB_LPA(Dataset):
       self.data_dir = None
       self.img_labels = None
       self.transform = transform
-      self.url = 'https://drive.usercontent.google.com/download?id=1JK2-1GKnL2dJ7rQMxq1RZrbPpl7klfs9&authuser=0&confirm=t&uuid=a3c805fa-edb8-478f-9707-1d18d0aa6748&at=APZUnTVvovjrysUqhvZwKm8eHjon%3A1705171365037'
+      self.url = 'https://drive.google.com/file/d/1JK2-1GKnL2dJ7rQMxq1RZrbPpl7klfs9/view?usp=sharing'
       self.id = '1JK2-1GKnL2dJ7rQMxq1RZrbPpl7klfs9'
       self.file_name = '300WLPA_2d.zip'
       self.origin_path = 'data/300W'
