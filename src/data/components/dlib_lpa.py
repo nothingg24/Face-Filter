@@ -57,7 +57,7 @@ class DLIB_LPA(Dataset):
   def prepare_labels(self):
       if self.data_dir is None:
           self.prepare_data()
-
+    
       if self.img_labels is None:
           data = []
           for labels_file in self.labels_files:
@@ -74,10 +74,9 @@ class DLIB_LPA(Dataset):
                               f"Point {i + 1}": (points[i], points[i+68])
                               })
                       data.append(row)
-
-      df = pd.DataFrame(data)
-      if not df.empty:
-          self.img_labels = df
+          df = pd.DataFrame(data)
+          if not df.empty:
+              self.img_labels = df
 
   def __len__(self):
       if self.img_labels is None:
