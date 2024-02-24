@@ -4,6 +4,6 @@ data_dir: data/300W
 train_val_test_split: [0.8, 0.1, 0.1]
 transform_train: default.yaml
 transform_val: default.yaml
-batch_size: 512 # 8/16/32/64/128
+batch_size: 64 # 8/16/32/64/128
 num_workers: 4
 pin_memory: False
