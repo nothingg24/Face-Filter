@@ -46,7 +46,7 @@ def detect(img_path: str, cfg: DictConfig) -> None:
 
         h, w, _ = image.shape
         print(keypoints, bbox)
-        keypoints = ((keypoints) * np.array([bbox['w'], bbox['h']]) + np.array([bbox['x'], bbox['y']])).astype(np.uint32)
+        keypoints = ((keypoints + 0.5) * np.array([bbox['w'], bbox['h']]) + np.array([bbox['x'], bbox['y']])).astype(np.uint32)
         print(keypoints)
 
         for point in keypoints:
