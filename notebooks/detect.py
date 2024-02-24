@@ -16,7 +16,7 @@ import cv2
 
 def detect(img_path: str, cfg: DictConfig) -> None:
     net = hydra.utils.instantiate(cfg.net)
-    model = DLIBLitModule.load_from_checkpoint(checkpoint_path='logs/train/runs/2023-12-08_13-06-32/checkpoints/last.ckpt', net=net)
+    model = DLIBLitModule.load_from_checkpoint(checkpoint_path='logs/train/runs/2024-02-22_14-14-53/checkpoints/last.ckpt', net=net)
 
     transform = A.Compose([A.CenterCrop(224, 224),
                             A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
