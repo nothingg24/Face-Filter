@@ -24,13 +24,12 @@ def detect(img_path: str, cfg: DictConfig) -> None:
     model = DLIBLitModule.load_from_checkpoint(checkpoint_path='logs/train/runs/2024-02-22_14-14-53/checkpoints/last.ckpt', net=net)
     model = model.to(device)
 
-    transform = A.Compose([A.Resize(256, 256),
-                            A.CenterCrop(224, 224),
+    transform = A.Compose([A.Resize(224, 224),
                             A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                             ToTensorV2()
                             ])
 
-    detector_name = "opencv"
+    detector_name = "ssd"
 
     img = Image.open(img_path).convert('RGB')
     width, height = img.size
@@ -65,7 +64,7 @@ def detect(img_path: str, cfg: DictConfig) -> None:
         output = model(transformed_input).squeeze()
 
     # test
-    # TransformDLIB.tensor_annotation(transformed['image'], output).save('output.png')
+    TransformDLIB.tensor_annotation(transformed['image'], output).save('output.png')
 
     h, w, _ = input.shape
     # print(output, bbox)
