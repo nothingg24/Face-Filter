@@ -25,8 +25,8 @@ git clone https://github.com/nothingg24/Face-Filter
 cd Face-Filter
 
 # [OPTIONAL] create conda environment
-conda create -n myenv python=3.9
-conda activate myenv
+conda create -n lighthydra python=3.9
+conda activate lighthydra
 
 # install pytorch according to instructions
 # https://pytorch.org/get-started/
@@ -39,14 +39,14 @@ pip install -r requirements.txt
 
 ```bash
 # clone project
-git clone https://github.com/YourGithubName/your-repo-name
-cd your-repo-name
+git clone https://github.com/nothingg24/Face-Filter
+cd Face-Filter
 
 # create conda environment and install dependencies
-conda env create -f environment.yaml -n myenv
+conda env create -f environment.yaml -n lighthydra
 
 # activate conda environment
-conda activate myenv
+conda activate lighthydra
 ```
 
 ## How to run
