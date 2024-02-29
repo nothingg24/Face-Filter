@@ -34,11 +34,12 @@ def detect(img_path: str, cfg: DictConfig) -> None:
     img = Image.open(img_path).convert('RGB')
     width, height = img.size
 
-    faces = DeepFace.extract_faces(img_path=img_path, target_size=(224, 224), detector_backend=detector_name)
+    faces = DeepFace.extract_faces(img_path=img_path, target_size=(256, 256), detector_backend=detector_name)
     face = faces[0]
 
     # face: list = [cropped image (h x w x c, np.array), bounding-box, confidence]
     # bbox = face['facial_area']
+
     old_bbox = face['facial_area']
     extend_x = old_bbox['w'] * 0.1
     extend_y = old_bbox['h'] * 0.1
@@ -68,7 +69,9 @@ def detect(img_path: str, cfg: DictConfig) -> None:
 
     h, w, _ = input.shape
     # print(output, bbox)
+
     output = (output + 0.5) * np.array([bbox['w'], bbox['h']]) + np.array([bbox['x'], bbox['y']])
+    
     # print(output)
 
     for point in output:
