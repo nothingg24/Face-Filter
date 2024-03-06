@@ -88,7 +88,7 @@ if __name__ == "__main__":
     
     @hydra.main(version_base=None, config_path=config_path, config_name="dlib.yaml")
     def main(cfg: DictConfig):
-        image = detect(img_path='face_img.jpg', cfg=cfg)
+        image = detect(img_path='noglass_face.jpg', cfg=cfg)
         image.save('result.png')
         plt.imshow(image)
         plt.show()
