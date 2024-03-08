@@ -31,7 +31,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
 
     detector_name = "ssd"
 
-    capture = cv2.VideoCapture(option)
+    capture = cv2.VideoCapture(0)
     if option != '0':
         fourcc = -1 #cv2.VideoWriter_fourcc(*'MP4V')
         width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -73,6 +73,8 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
             for point in output:
                 cv2.circle(frame, (int(point[0]), int(point[1])), 5, (0, 255, 0), -1)
 
+            cv2.imshow('landmark', frame)   
+
             if option != '0':
                 out.write(frame)
             else:
@@ -85,7 +87,8 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
             break
 
     capture.release()
-    out.release()
+    if option != '0':
+        out.release()
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
