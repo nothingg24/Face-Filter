@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import cv2
 import PIL
 from PIL import Image, ImageDraw
+import math
 
 def detect(cfg: DictConfig, option: Optional[str] = None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -39,42 +40,73 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
         fps = capture.get(cv2.CAP_PROP_FPS)
         out = cv2.VideoWriter('output.mp4', fourcc, fps, (width, height))
 
-    while True:
+    isFirstFrame = True
+    sigma = 50
+
+    while (capture.isOpened()): #True
         ret, frame = capture.read()
 
         if ret:
             img_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             faces = DeepFace.extract_faces(img_path=img_frame, target_size=(224, 224), detector_backend=detector_name, enforce_detection=False)
             # face = faces[0]
-            for face in faces:
-                old_bbox = face['facial_area']
-                extend_x = old_bbox['w'] * 0.1
-                extend_y = old_bbox['h'] * 0.1
-                bbox = {
-                    'x': old_bbox['x'] - extend_x,
-                    'y': old_bbox['y'] - extend_y,
-                    'w': old_bbox['w'] + 2 * extend_x,
-                    'h': old_bbox['h'] + 2 * extend_y
-                }
+            if faces is not None:
+                for face in faces:
+                    old_bbox = face['facial_area']
+                    extend_x = old_bbox['w'] * 0.1
+                    extend_y = old_bbox['h'] * 0.1
+                    bbox = {
+                        'x': old_bbox['x'] - extend_x,
+                        'y': old_bbox['y'] - extend_y,
+                        'w': old_bbox['w'] + 2 * extend_x,
+                        'h': old_bbox['h'] + 2 * extend_y
+                    }
 
-                img_frame = Image.fromarray(img_frame)
-                input = img_frame.crop((bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']))
-                input = np.array(input)
-                transformed = transform(image=input)
-                transformed_input = torch.unsqueeze(transformed['image'], dim=0).to(device)
-                model.eval()
-                with torch.inference_mode():
-                    output = model(transformed_input).squeeze()
-                output = (output + 0.5) * np.array([bbox['w'], bbox['h']]) + np.array([bbox['x'], bbox['y']])
+                    img_frame = Image.fromarray(img_frame)
+                    input = img_frame.crop((bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']))
+                    input = np.array(input)
+                    transformed = transform(image=input)
+                    transformed_input = torch.unsqueeze(transformed['image'], dim=0).to(device)
+                    model.eval()
+                    with torch.inference_mode():
+                        output = model(transformed_input).squeeze()
+                    output = (output + 0.5) * np.array([bbox['w'], bbox['h']]) + np.array([bbox['x'], bbox['y']])
 
-                # draw = ImageDraw.Draw(frame)
-                # draw.rectangle([bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']], outline=(0, 255, 0))
-                # for point in output:
-                #     draw.ellipse(xy=(point[0] - 5, point[1] - 5, point[0] + 5, point[1] + 5), fill=(0, 255, 0))
-                for point in output:
-                    cv2.circle(frame, (int(point[0]), int(point[1])), 2, (0, 255, 0), -1)
+                    # draw = ImageDraw.Draw(frame)
+                    # draw.rectangle([bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']], outline=(0, 255, 0))
+                    # for point in output:
+                    #     draw.ellipse(xy=(point[0] - 5, point[1] - 5, point[0] + 5, point[1] + 5), fill=(0, 255, 0))
+                    # for point in output:
+                    #     cv2.circle(frame, (int(point[0]), int(point[1])), 2, (0, 255, 0), -1)
+                    
+                    points2 = output.tolist()
+                    img2Gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-            cv2.imshow('landmark', frame)   
+                    if isFirstFrame:
+                        points2Prev = np.array(points2, np.float32)
+                        img2GrayPrev = np.copy(img2Gray)
+                        isFirstFrame = False
+
+                    lk_params = dict(winSize=(101, 101), maxLevel=15,
+                                    criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.001))
+                    points2Next, st, err = cv2.calcOpticalFlowPyrLK(img2GrayPrev, img2Gray, points2Prev,
+                                                                    np.array(points2, np.float32),
+                                                                    **lk_params)
+                    
+                    for k in range(0, len(points2)):
+                        d = cv2.norm(np.array(points2[k]) - points2Next[k])
+                        alpha = math.exp(-d * d / sigma)
+                        points2[k] = (1 - alpha) * np.array(points2[k]) + alpha * points2Next[k]
+                        points2[k] = (min(max(points2[k][0], 0), frame.shape[1] - 1), min(max(points2[k][1], 0), frame.shape[0] - 1))
+                        points2[k] = (int(points2[k][0]), int(points2[k][1]))
+
+                    points2Prev = np.array(points2, np.float32)
+                    img2GrayPrev = img2Gray
+
+                    for point in points2:
+                        cv2.circle(frame, (point[0], point[1]), 2, (0, 255, 0), -1)
+
+                cv2.imshow('landmark', frame)   
 
             if option != '0':
                 out.write(frame)
