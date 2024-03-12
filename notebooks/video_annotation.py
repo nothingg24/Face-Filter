@@ -44,34 +44,35 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
 
         if ret:
             img_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            faces = DeepFace.extract_faces(img_path=img_frame, target_size=(224, 224), detector_backend=detector_name)
-            face = faces[0]
-            old_bbox = face['facial_area']
-            extend_x = old_bbox['w'] * 0.1
-            extend_y = old_bbox['h'] * 0.1
-            bbox = {
-                'x': old_bbox['x'] - extend_x,
-                'y': old_bbox['y'] - extend_y,
-                'w': old_bbox['w'] + 2 * extend_x,
-                'h': old_bbox['h'] + 2 * extend_y
-            }
+            faces = DeepFace.extract_faces(img_path=img_frame, target_size=(224, 224), detector_backend=detector_name, enforce_detection=False)
+            # face = faces[0]
+            for face in faces:
+                old_bbox = face['facial_area']
+                extend_x = old_bbox['w'] * 0.1
+                extend_y = old_bbox['h'] * 0.1
+                bbox = {
+                    'x': old_bbox['x'] - extend_x,
+                    'y': old_bbox['y'] - extend_y,
+                    'w': old_bbox['w'] + 2 * extend_x,
+                    'h': old_bbox['h'] + 2 * extend_y
+                }
 
-            img_frame = Image.fromarray(img_frame)
-            input = img_frame.crop((bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']))
-            input = np.array(input)
-            transformed = transform(image=input)
-            transformed_input = torch.unsqueeze(transformed['image'], dim=0).to(device)
-            model.eval()
-            with torch.inference_mode():
-                output = model(transformed_input).squeeze()
-            output = (output + 0.5) * np.array([bbox['w'], bbox['h']]) + np.array([bbox['x'], bbox['y']])
+                img_frame = Image.fromarray(img_frame)
+                input = img_frame.crop((bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']))
+                input = np.array(input)
+                transformed = transform(image=input)
+                transformed_input = torch.unsqueeze(transformed['image'], dim=0).to(device)
+                model.eval()
+                with torch.inference_mode():
+                    output = model(transformed_input).squeeze()
+                output = (output + 0.5) * np.array([bbox['w'], bbox['h']]) + np.array([bbox['x'], bbox['y']])
 
-            # draw = ImageDraw.Draw(frame)
-            # draw.rectangle([bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']], outline=(0, 255, 0))
-            # for point in output:
-            #     draw.ellipse(xy=(point[0] - 5, point[1] - 5, point[0] + 5, point[1] + 5), fill=(0, 255, 0))
-            for point in output:
-                cv2.circle(frame, (int(point[0]), int(point[1])), 5, (0, 255, 0), -1)
+                # draw = ImageDraw.Draw(frame)
+                # draw.rectangle([bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']], outline=(0, 255, 0))
+                # for point in output:
+                #     draw.ellipse(xy=(point[0] - 5, point[1] - 5, point[0] + 5, point[1] + 5), fill=(0, 255, 0))
+                for point in output:
+                    cv2.circle(frame, (int(point[0]), int(point[1])), 2, (0, 255, 0), -1)
 
             cv2.imshow('landmark', frame)   
 
