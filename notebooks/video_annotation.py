@@ -45,6 +45,8 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
 
     while (capture.isOpened()): #True
         ret, frame = capture.read()
+        if option == '0':
+            frame = cv2.flip(frame, 1)
 
         if ret:
             img_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -53,6 +55,8 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
             if faces is not None:
                 for face in faces:
                     old_bbox = face['facial_area']
+                    if old_bbox['w'] == int(capture.get(cv2.CAP_PROP_FRAME_WIDTH)):
+                        break
                     extend_x = old_bbox['w'] * 0.1
                     extend_y = old_bbox['h'] * 0.1
                     bbox = {
