@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import cv2
 import PIL
 from PIL import Image, ImageDraw
-import math
+import math, time
 
 def detect(cfg: DictConfig, option: Optional[str] = None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -33,6 +33,8 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
     detector_name = "ssd"
 
     capture = cv2.VideoCapture(0)
+    prev_frame_time = 0
+    new_frame_time = 0
     if option != '0':
         fourcc = -1 #cv2.VideoWriter_fourcc(*'MP4V')
         width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -50,6 +52,13 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
 
         if ret:
             img_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            new_frame_time = time.time()
+            fps = 1 / (new_frame_time - prev_frame_time)
+            prev_frame_time = new_frame_time
+            fps = int(fps)
+            fps = str(fps)
+            cv2.putText(frame, fps, (7, 70), font, 3, (100, 255, 0), 3, cv2.LINE_AA)
             faces = DeepFace.extract_faces(img_path=img_frame, target_size=(224, 224), detector_backend=detector_name, enforce_detection=False)
             # face = faces[0]
             if faces is not None:
@@ -102,8 +111,33 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                     points2Prev = np.array(points2, np.float32)
                     img2GrayPrev = img2Gray
 
+                    # # Initialize Kalman Filter
+                    # stateNum = 272
+                    # measureNum = 136
+                    # KF = cv2.KalmanFilter(stateNum, measureNum, 0)
+                    # state = np.zeros((stateNum, 1), np.float32)
+                    # processNoise = np.zeros((stateNum, 1), np.float32)
+                    # measurement = np.zeros((measureNum, 1), np.float32)
+
+                    # # Update Measurement
+                    # for i in range(136):
+                    #     if i % 2 == 0:
+                    #         measurement[i] = points2[i // 2][0]
+                    #     else:
+                    #         measurement[i] = points2[(i - 1) // 2][1]
+
+                    # # Update the Measurement Matrix
+                    # measurement = np.dot(KF.measurementMatrix, state) + measurement
+                    # KF.correct(measurement)
+
+                    # # Kalman Prediction
+                    # prediction = KF.predict()
+                    # for i in range(68):
+                    #     points2[i] = (prediction[i*2], prediction[i*2 + 1])
+
+
                     for point in points2:
-                        cv2.circle(frame, (point[0], point[1]), 2, (0, 255, 0), -1)
+                        cv2.circle(frame, (int(point[0]), int(point[1])), 2, (0, 255, 0), -1)
                     cv2.rectangle(frame, (int(bbox['x']), int(bbox['y'])), (int(bbox['x'] + bbox['w']), int(bbox['y'] + bbox['h'])), (0, 255, 0), 2)
 
                 cv2.imshow('landmark', frame)   
