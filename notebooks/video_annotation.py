@@ -54,17 +54,19 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
             # face = faces[0]
             if faces is not None:
                 for face in faces:
+                    bbox = None
                     old_bbox = face['facial_area']
                     if old_bbox['w'] == int(capture.get(cv2.CAP_PROP_FRAME_WIDTH)):
                         break
                     extend_x = old_bbox['w'] * 0.1
                     extend_y = old_bbox['h'] * 0.1
-                    bbox = {
+                    new_bbox = {
                         'x': old_bbox['x'] - extend_x,
                         'y': old_bbox['y'] - extend_y,
                         'w': old_bbox['w'] + 2 * extend_x,
                         'h': old_bbox['h'] + 2 * extend_y
                     }
+                    bbox = new_bbox
 
                     img_frame = Image.fromarray(img_frame)
                     input = img_frame.crop((bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']))
@@ -75,13 +77,6 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                     with torch.inference_mode():
                         output = model(transformed_input).squeeze()
                     output = (output + 0.5) * np.array([bbox['w'], bbox['h']]) + np.array([bbox['x'], bbox['y']])
-
-                    # draw = ImageDraw.Draw(frame)
-                    # draw.rectangle([bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']], outline=(0, 255, 0))
-                    # for point in output:
-                    #     draw.ellipse(xy=(point[0] - 5, point[1] - 5, point[0] + 5, point[1] + 5), fill=(0, 255, 0))
-                    # for point in output:
-                    #     cv2.circle(frame, (int(point[0]), int(point[1])), 2, (0, 255, 0), -1)
                     
                     points2 = output.tolist()
                     img2Gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -109,6 +104,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
 
                     for point in points2:
                         cv2.circle(frame, (point[0], point[1]), 2, (0, 255, 0), -1)
+                    cv2.rectangle(frame, (int(bbox['x']), int(bbox['y'])), (int(bbox['x'] + bbox['w']), int(bbox['y'] + bbox['h'])), (0, 255, 0), 2)
 
                 cv2.imshow('landmark', frame)   
 
