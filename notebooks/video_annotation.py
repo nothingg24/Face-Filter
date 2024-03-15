@@ -58,7 +58,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
             # prev_frame_time = new_frame_time
             # fps = int(fps)
             # fps = str(fps)
-            fps = capture.get(cv2.CAP_PROP_FPS)
+            fps = int(capture.get(cv2.CAP_PROP_FPS))
             fps = str(fps)
             cv2.putText(frame, fps, (7, 70), font, 3, (100, 255, 0), 3, cv2.LINE_AA)
             faces = DeepFace.extract_faces(img_path=img_frame, target_size=(224, 224), detector_backend=detector_name, enforce_detection=False)
