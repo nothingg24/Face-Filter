@@ -33,8 +33,8 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
     detector_name = "ssd"
 
     capture = cv2.VideoCapture(0)
-    prev_frame_time = 0
-    new_frame_time = 0
+    # prev_frame_time = 0
+    # new_frame_time = 0
     if option != '0':
         fourcc = -1 #cv2.VideoWriter_fourcc(*'MP4V')
         width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -53,10 +53,12 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
         if ret:
             img_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             font = cv2.FONT_HERSHEY_SIMPLEX
-            new_frame_time = time.time()
-            fps = 1 / (new_frame_time - prev_frame_time)
-            prev_frame_time = new_frame_time
-            fps = int(fps)
+            # new_frame_time = time.time()
+            # fps = 1 / (new_frame_time - prev_frame_time)
+            # prev_frame_time = new_frame_time
+            # fps = int(fps)
+            # fps = str(fps)
+            fps = capture.get(cv2.CAP_PROP_FPS)
             fps = str(fps)
             cv2.putText(frame, fps, (7, 70), font, 3, (100, 255, 0), 3, cv2.LINE_AA)
             faces = DeepFace.extract_faces(img_path=img_frame, target_size=(224, 224), detector_backend=detector_name, enforce_detection=False)
