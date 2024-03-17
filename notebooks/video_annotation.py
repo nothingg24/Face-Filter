@@ -17,6 +17,7 @@ import cv2
 import PIL
 from PIL import Image, ImageDraw
 import math, time
+from notebooks.kalman import KalmanFilter
 
 def detect(cfg: DictConfig, option: Optional[str] = None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -78,6 +79,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                         'h': old_bbox['h'] + 2 * extend_y
                     }
                     bbox = new_bbox
+                    cv2.rectangle(frame, (int(bbox['x']), int(bbox['y'])), (int(bbox['x'] + bbox['w']), int(bbox['y'] + bbox['h'])), (0, 255, 0), 2)
 
                     img_frame = Image.fromarray(img_frame)
                     input = img_frame.crop((bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']))
@@ -97,10 +99,17 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                         img2GrayPrev = np.copy(img2Gray)
                         isFirstFrame = False
 
+                    trackPoints = []
+                    if len(trackPoints) == 0:
+                        trackPoints = [KalmanFilter(point) for point in points2]
+                    else:
+                        KalmanFilter.trackpoints(img2GrayPrev, img2Gray, points2, trackPoints)
+
                     lk_params = dict(winSize=(101, 101), maxLevel=15,
                                     criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.001))
+
                     points2Next, st, err = cv2.calcOpticalFlowPyrLK(img2GrayPrev, img2Gray, points2Prev,
-                                                                    np.array(points2, np.float32),
+                                                                    np.array(points2, np.float32), #None
                                                                     **lk_params)
                     
                     for k in range(0, len(points2)):
@@ -113,34 +122,14 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                     points2Prev = np.array(points2, np.float32)
                     img2GrayPrev = img2Gray
 
-                    # # Initialize Kalman Filter
-                    # stateNum = 272
-                    # measureNum = 136
-                    # KF = cv2.KalmanFilter(stateNum, measureNum, 0)
-                    # state = np.zeros((stateNum, 1), np.float32)
-                    # processNoise = np.zeros((stateNum, 1), np.float32)
-                    # measurement = np.zeros((measureNum, 1), np.float32)
+                    # for point in points2:
+                    #     cv2.circle(frame, (int(point[0]), int(point[1])), 2, (0, 255, 0), -1)
 
-                    # # Update Measurement
-                    # for i in range(136):
-                    #     if i % 2 == 0:
-                    #         measurement[i] = points2[i // 2][0]
-                    #     else:
-                    #         measurement[i] = points2[(i - 1) // 2][1]
+                    for tp in trackPoints:
+                        cv2.circle(frame, tuple(map(int, tp.getPoint())), 3, (0, 0, 255) if tp.isPredicted() else (0, 255, 0), cv2.FILLED)
+                        # cv2.circle(frame, (int(tp.getPoint()[0]), int(tp.getPoint()[1])), 2, (0, 0, 255), -1)
 
-                    # # Update the Measurement Matrix
-                    # measurement = np.dot(KF.measurementMatrix, state) + measurement
-                    # KF.correct(measurement)
-
-                    # # Kalman Prediction
-                    # prediction = KF.predict()
-                    # for i in range(68):
-                    #     points2[i] = (prediction[i*2], prediction[i*2 + 1])
-
-
-                    for point in points2:
-                        cv2.circle(frame, (int(point[0]), int(point[1])), 2, (0, 255, 0), -1)
-                    cv2.rectangle(frame, (int(bbox['x']), int(bbox['y'])), (int(bbox['x'] + bbox['w']), int(bbox['y'] + bbox['h'])), (0, 255, 0), 2)
+                    
 
                 cv2.imshow('landmark', frame)   
 
