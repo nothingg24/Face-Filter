@@ -121,21 +121,21 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                     else:
                         KalmanFilter.trackpoints(img2GrayPrev, img2Gray, points2, trackPoints)
 
-                    lk_params = dict(winSize=(101, 101), maxLevel=15,
-                                    criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.001))
+                    # lk_params = dict(winSize=(101, 101), maxLevel=15,
+                    #                 criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.001))
 
-                    points2Next, st, err = cv2.calcOpticalFlowPyrLK(img2GrayPrev, img2Gray, points2Prev,
-                                                                    np.array(points2, np.float32), #None
-                                                                    **lk_params)
+                    # points2Next, st, err = cv2.calcOpticalFlowPyrLK(img2GrayPrev, img2Gray, points2Prev,
+                    #                                                 np.array(points2, np.float32), #None
+                    #                                                 **lk_params)
                     
-                    for k in range(0, len(points2)):
-                        d = cv2.norm(np.array(points2[k]) - points2Next[k])
-                        alpha = math.exp(-d * d / sigma)
-                        points2[k] = (1 - alpha) * np.array(points2[k]) + alpha * points2Next[k]
-                        points2[k] = (min(max(points2[k][0], 0), frame.shape[1] - 1), min(max(points2[k][1], 0), frame.shape[0] - 1))
-                        points2[k] = (int(points2[k][0]), int(points2[k][1]))
+                    # for k in range(0, len(points2)):
+                    #     d = cv2.norm(np.array(points2[k]) - points2Next[k])
+                    #     alpha = math.exp(-d * d / sigma)
+                    #     points2[k] = (1 - alpha) * np.array(points2[k]) + alpha * points2Next[k]
+                    #     points2[k] = (min(max(points2[k][0], 0), frame.shape[1] - 1), min(max(points2[k][1], 0), frame.shape[0] - 1))
+                    #     points2[k] = (int(points2[k][0]), int(points2[k][1]))
 
-                    points2Prev = np.array(points2, np.float32)
+                    # points2Prev = np.array(trackPoints, np.float32) #points2
                     img2GrayPrev = img2Gray
 
                     # for point in points2:
