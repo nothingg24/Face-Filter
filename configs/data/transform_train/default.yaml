@@ -24,12 +24,42 @@ transforms:
     r_shift_limit: 10
     g_shift_limit: 10
     b_shift_limit: 10
-    p: 0.5
+    p: 0.3
+  - _target_: albumentations.HueSaturationValue
+    hue_shift_limit: 10
+    sat_shift_limit: 10
+    val_shift_limit: 10
+    p: 0.2
+  - _target_: albumentations.ISONoise
+    p: 0.05
+  - _target_: albumentations.MotionBlur
+    p: 0.05
+  - _target_: albumentations.ZoomBlur
+    p: 0.05
+  - _target_: albumentations.RandomSunFlare
+    p: 0.01
+  - _target_: albumentations.RandomGridShuffle
+    p: 0.05
+  - _target_: albumentations.RandomShadow
+    p: 0.01
+  - _target_: albumentations.RandomToneCurve
+    p: 0.01
+  - _target_: albumentations.RandomGamma
+    p: 0.1
+  - _target_: albumentations.GaussNoise
+    p: 0.1
+  - _target_: albumentations.GaussianBlur
+    p: 0.1
+  - _target_: albumentations.GlassBlur
+    p: 0.05
   - _target_: albumentations.augmentations.transforms.RandomBrightnessContrast
   - _target_: albumentations.AdvancedBlur
+  - _target_: albumentations.CLAHE
+    p: 0.01
   - _target_: albumentations.augmentations.transforms.Sharpen
   - _target_: albumentations.augmentations.transforms.PixelDropout
   - _target_: albumentations.augmentations.dropout.channel_dropout.ChannelDropout
+    p: 0.1
   - _target_: albumentations.augmentations.dropout.cutout.Cutout  #albumentations.augmentations.dropout.coarse_dropout.CoarseDropout
     num_holes: 10 #max_holes
     max_h_size: 10 #max_height
