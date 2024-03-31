@@ -27,8 +27,6 @@ class NME(Metric):
         distances = np.linalg.norm(((preds - target) / normalize_factor[:, None, :]), axis=-1)
         distances = distances.T
         distances = torch.tensor(distances)
-        print(distances)
-        print(len(distances))
         self.distances+=distances.sum()
         self.total+=distances.numel()#len(distances)
 
