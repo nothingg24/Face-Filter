@@ -4,6 +4,9 @@ import torch, os
 from lightning import LightningModule
 from torchmetrics import MinMetric, MeanMetric
 from torchmetrics.regression import MeanAbsoluteError
+from src.models.components.nme import NME
+#from src.models.components.softwingloss import SoftWingLoss
+from src.models.components.loss import SoftWingLoss
 import torchvision, wandb, pyrootutils
 import numpy as np
 from PIL import ImageDraw, Image
@@ -114,12 +117,17 @@ class DLIBLitModule(LightningModule):
         self.net = net
 
         # loss function
-        self.criterion = torch.nn.MSELoss()
+        # self.criterion = torch.nn.MSELoss()
+        self.criterion = SoftWingLoss()
 
         # metric objects for calculating and averaging accuracy across batches
         self.train_err = MeanAbsoluteError()
         self.val_err = MeanAbsoluteError()
         self.test_err = MeanAbsoluteError()
+
+        self.train_nme = NME()
+        self.val_nme = NME()
+        self.test_nme = NME()
 
         # for averaging loss across batches
         self.train_loss = MeanMetric()
@@ -155,8 +163,10 @@ class DLIBLitModule(LightningModule):
         # update and log metrics
         self.train_loss(loss)
         self.train_err(preds, targets)
+        self.train_nme(preds, targets)
         self.log("train/loss", self.train_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("train/err", self.train_err, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("train/nme", self.train_nme, on_step=False, on_epoch=True, prog_bar=True)
 
         # return dict with any tensors to read in callback or in `on_train_epoch_end` below
         # return loss or backpropagation will fail
@@ -172,8 +182,10 @@ class DLIBLitModule(LightningModule):
         # update and log metrics
         self.val_loss(loss)
         self.val_err(preds, targets)
+        self.val_nme(preds, targets)
         self.log("val/loss", self.val_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("val/err", self.val_err, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/nme", self.val_nme, on_step=False, on_epoch=True, prog_bar=True)
         
         # save image, targets and preds to draw batch in on_validation_epoch_end
         self.validation_step_outputs.append({"image": images, "targets": targets, "preds": preds})
@@ -210,8 +222,10 @@ class DLIBLitModule(LightningModule):
         # update and log metrics
         self.test_loss(loss)
         self.test_err(preds, targets)
+        self.test_nme(preds, targets)
         self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("test/err", self.test_err, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("test/nme", self.test_nme, on_step=False, on_epoch=True, prog_bar=True)
 
         return {"loss": loss, "preds": preds, "targets": targets}
 
