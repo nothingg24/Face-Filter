@@ -22,11 +22,11 @@ class NME(Metric):
 
     def update(self, preds: Tensor, target: Tensor)->None:
         _check_same_shape(preds, target)
-        interoccular = np.linalg.norm(target[:, self.keypoint_indices[0], :] - target[:, self.keypoint_indices[1], :], axis=1, keepdims=True)
+        interoccular = torch.linalg.norm(target[:, self.keypoint_indices[0], :] - target[:, self.keypoint_indices[1], :], axis=1, keepdims=True) #np
         normalize_factor = np.tile(interoccular, [1, 2])
-        distances = np.linalg.norm(((preds - target) / normalize_factor[:, None, :]), axis=-1)
-        distances = distances.T
-        distances = torch.tensor(distances)
+        distances = torch.linalg.norm(((preds - target) / normalize_factor[:, None, :]), axis=-1) #np
+     #    distances = distances.T
+     #    distances = torch.tensor(distances)
         self.distances+=distances.sum()
         self.total+=distances.numel()#len(distances)
 
@@ -172,7 +172,7 @@ if __name__ == "__main__":
          [0.6536, 0.8018],
          [0.9067, 0.7094],
          [0.7724, 0.5506]]])
-    #print(metric(preds, target))
+    print("{:.10f}".format(metric(preds, target)))
     target=tensor([[[0.3940, 0.4120],
          [0.5349, 0.1031],
          [0.7704, 0.1679],
@@ -585,4 +585,7 @@ if __name__ == "__main__":
          [8.5310e-01, 6.8209e-01],
          [1.5904e-01, 6.1956e-01],
          [9.3775e-01, 6.7911e-01]]])
+    print("{:.10f}".format(metric(preds, target)))
+    target = torch.rand(64,68,2)
+    preds = torch.rand(64,68,2)
     print("{:.10f}".format(metric(preds, target)))
