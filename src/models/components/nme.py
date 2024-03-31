@@ -23,7 +23,7 @@ class NME(Metric):
     def update(self, preds: Tensor, target: Tensor)->None:
         _check_same_shape(preds, target)
         interoccular = torch.linalg.norm(target[:, self.keypoint_indices[0], :] - target[:, self.keypoint_indices[1], :], axis=1, keepdims=True) #np
-        normalize_factor = np.tile(interoccular, [1, 2])
+        normalize_factor = torch.tile(interoccular, [1, 2]) #np
         distances = torch.linalg.norm(((preds - target) / normalize_factor[:, None, :]), axis=-1) #np
      #    distances = distances.T
      #    distances = torch.tensor(distances)
