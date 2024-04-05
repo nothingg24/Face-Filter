@@ -21,7 +21,7 @@ def detect(img_path: str, cfg: DictConfig) -> None:
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     net = hydra.utils.instantiate(cfg.net)
-    model = DLIBLitModule.load_from_checkpoint(checkpoint_path='logs/train/runs/2024-02-22_14-14-53/checkpoints/last.ckpt', net=net)
+    model = DLIBLitModule.load_from_checkpoint(checkpoint_path='logs/train/runs/2024-04-04_13-19-41/checkpoints/last.ckpt', net=net)
     model = model.to(device)
 
     transform = A.Compose([A.Resize(224, 224),
