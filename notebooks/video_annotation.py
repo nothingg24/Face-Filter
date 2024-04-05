@@ -23,8 +23,8 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     net = hydra.utils.instantiate(cfg.net)
-    model = DLIBLitModule.load_from_checkpoint(checkpoint_path='logs/train/runs/2024-02-22_14-14-53/checkpoints/last.ckpt', net=net)
-    model = model.to(device)
+    model = DLIBLitModule.load_from_checkpoint(checkpoint_path='logs/train/runs/2024-04-04_13-19-41/checkpoints/last.ckpt', net=net) #logs/train/runs/2024-02-22_14-14-53/checkpoints/last.ckpt
+    model = model.to(device) 
 
     transform = A.Compose([A.Resize(224, 224),
                             A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
