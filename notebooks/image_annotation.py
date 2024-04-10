@@ -17,14 +17,15 @@ import cv2
 import PIL
 from PIL import Image, ImageDraw
 import xml.etree.ElementTree as ET
-import notebooks.faceBlendCommon as fbc 
+import notebooks.faceBlendCommon as fbc
+import csv
 
 VISUALIZE_LANDMARKS = False
 
 filters_config = {
     'naruto':
         [{'path': 'filter/image/naruto.png',
-          'anno_path': 'filter/annotations/naruto.svg',
+          'anno_path': 'filter/annotations/naruto.csv', #naruto.svg
           'morph': True, 'animated': False, 'has_alpha': True
         }],
 }
@@ -80,6 +81,19 @@ def get_filter_landmarks(annotation_path: str) -> np.array:
         # landmarks[int(circle.get('data-label-name')) - 1] = (x, y)
     return np.array(landmarks)
 
+def load_filter_landmarks(annotation_file: str) -> np.array:
+    with open(annotation_file) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=",")
+        points = {}
+        for i, row in enumerate(csv_reader):
+            # skip head or empty line if it's there
+            try:
+                x, y = int(row[1]), int(row[2])
+                points[row[0]] = (x, y)
+            except ValueError:
+                continue
+        return points
+
 def get_filter_image(img_path, has_alpha):
     img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
  
@@ -92,8 +106,8 @@ def get_filter_image(img_path, has_alpha):
 
 def find_convex_hull(points: np.array):
     hull = []
-    # hullIndex = cv2.convexHull(np.array(list(points.values())), clockwise=False, returnPoints=False)
-    hullIndex = cv2.convexHull(np.array(points, dtype=np.float32), clockwise=False, returnPoints=False)
+    hullIndex = cv2.convexHull(np.array(list(points.values())), clockwise=False, returnPoints=False)
+    # hullIndex = cv2.convexHull(np.array(points, dtype=np.float32), clockwise=False, returnPoints=False)
     addPoints = [
         [48], [49], [50], [51], [52], [53], [54], [55], [56], [57], [58], [59],  # Outer lips
         [60], [61], [62], [63], [64], [65], [66], [67],  # Inner lips
@@ -103,7 +117,7 @@ def find_convex_hull(points: np.array):
     ]
     hullIndex = np.concatenate((hullIndex, addPoints))
     for i in range(0, len(hullIndex)):
-        hull.append(points[int(hullIndex[i][0])])
+        hull.append(points[str(hullIndex[i][0])]) #int
  
     return hull, hullIndex
 
@@ -119,10 +133,11 @@ def load_filter(filter_name: str = 'naruto'):
         temp_dict['img'] = img1
         temp_dict['img_a'] = img1_alpha
 
-        pil_img1 = Image.open(filter['path']).convert('RGB')
-        w, h = pil_img1.size
+        # pil_img1 = Image.open(filter['path']).convert('RGB')
+        # w, h = pil_img1.size
  
-        points = (get_filter_landmarks(filter['anno_path']) / np.array([100, 100]))  * np.array([w, h])
+        # points = (get_filter_landmarks(filter['anno_path']) / np.array([100, 100]))  * np.array([w, h])
+        points = load_filter_landmarks(filter['anno_path'])
  
         temp_dict['points'] = points
  
