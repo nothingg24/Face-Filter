@@ -19,6 +19,7 @@ from PIL import Image, ImageDraw
 import math, time
 from notebooks.kalman import KalmanFilter
 import notebooks.faceBlendCommon as fbc
+import csv
 VISUALIZE_LANDMARKS = True
 VISUALIZE_FILTER = False
 
@@ -133,6 +134,9 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
 
     isFirstFrame = True
     sigma = 50
+    iter_filter_keys = iter(filters_config.keys())
+    filters, multi_filter_runtime = load_filter(next(iter_filter_keys))
+    count = 0
 
     while (capture.isOpened()): #True
         ret, frame = capture.read()
@@ -174,8 +178,8 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                     else:
                         KalmanFilter.trackpoints(img2GrayPrev, img2Gray, bbox_points, trackBbox)
 
-                    #if VISUALIZE_LANDMARKS:
-                    cv2.rectangle(frame, tuple(map(int, trackBbox[0].getPoint())), tuple(map(int, trackBbox[1].getPoint())), (0, 255, 0), 2)
+                    if VISUALIZE_LANDMARKS:
+                        cv2.rectangle(frame, tuple(map(int, trackBbox[0].getPoint())), tuple(map(int, trackBbox[1].getPoint())), (0, 255, 0), 2)
 
                     img_frame = Image.fromarray(img_frame)
                     input = img_frame.crop((trackBbox[0].getPoint()[0], trackBbox[0].getPoint()[1], trackBbox[1].getPoint()[0], trackBbox[1].getPoint()[1]))
@@ -191,8 +195,6 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                     img2Gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
                     if isFirstFrame:
-                        #points2Prev = np.array(points2, np.float32)
-                        #points2Prev = points2
                         img2GrayPrev = np.copy(img2Gray)
                         isFirstFrame = False
 
@@ -203,16 +205,77 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                         KalmanFilter.trackpoints(img2GrayPrev, img2Gray, points2, trackPoints)
 
                     img2GrayPrev = img2Gray
-                    #points2Prev = trackPoints
 
-                    #if VISUALIZE_LANDMARKS:
-                    for tp in trackPoints:
-                        cv2.circle(frame, tuple(map(int, tp.getPoint())), 3, (0, 0, 255) if tp.isPredicted() else (0, 255, 0), cv2.FILLED)
-                    #else:
+                    if VISUALIZE_LANDMARKS:
+                        for tp in trackPoints:
+                            cv2.circle(frame, tuple(map(int, tp.getPoint())), 3, (0, 0, 255) if tp.isPredicted() else (0, 255, 0), cv2.FILLED)
+                        cv2.imshow('landmark', frame)
+                    else:
+                        for idx, filter in enumerate(filters):
+                            filter_runtime = multi_filter_runtime[idx]
+                            img1 = filter_runtime['img']
+                            points1 = filter_runtime['points']
+                            img1_alpha = filter_runtime['img_a']
+                
+                            if filter['morph']:                
+                                hullIndex = filter_runtime['hullIndex']
+                                dt = filter_runtime['dt']
+                                hull1 = filter_runtime['hull']
+                
+                                # create copy of frame
+                                warped_img = np.copy(frame)
+                
+                                # Find convex hull
+                                hull2 = []
+                                for i in range(0, len(hullIndex)):
+                                    hull2.append(trackPoints[hullIndex[i][0]])
+                
+                                mask1 = np.zeros((warped_img.shape[0], warped_img.shape[1]), dtype=np.float32)
+                                mask1 = cv2.merge((mask1, mask1, mask1))
+                                img1_alpha_mask = cv2.merge((img1_alpha, img1_alpha, img1_alpha))
+                
+                                # Warp the triangles
+                                for i in range(0, len(dt)):
+                                    t1 = []
+                                    t2 = []
+                
+                                    for j in range(0, 3):
+                                        t1.append(hull1[dt[i][j]])
+                                        t2.append(hull2[dt[i][j]])
+                
+                                    fbc.warpTriangle(img1, warped_img, t1, t2)
+                                    fbc.warpTriangle(img1_alpha_mask, mask1, t1, t2)
+                
+                                # Blur the mask before blending
+                                mask1 = cv2.GaussianBlur(mask1, (3, 3), 10)
+                
+                                mask2 = (255.0, 255.0, 255.0) - mask1
+                
+                                # Perform alpha blending of the two images
+                                temp1 = np.multiply(warped_img, (mask1 * (1.0 / 255)))
+                                temp2 = np.multiply(frame, (mask2 * (1.0 / 255)))
+                                output = temp1 + temp2
+                            else:
+                                dst_points = [trackPoints[int(list(points1.keys())[0])], trackPoints[int(list(points1.keys())[1])]]
+                                tform = fbc.similarityTransform(list(points1.values()), dst_points)
+                                # Apply similarity transform to input image
+                                trans_img = cv2.warpAffine(img1, tform, (frame.shape[1], frame.shape[0]))
+                                trans_alpha = cv2.warpAffine(img1_alpha, tform, (frame.shape[1], frame.shape[0]))
+                                mask1 = cv2.merge((trans_alpha, trans_alpha, trans_alpha))
+                
+                                # Blur the mask before blending
+                                mask1 = cv2.GaussianBlur(mask1, (3, 3), 10)
+                
+                                mask2 = (255.0, 255.0, 255.0) - mask1
+                
+                                # Perform alpha blending of the two images
+                                temp1 = np.multiply(trans_img, (mask1 * (1.0 / 255)))
+                                temp2 = np.multiply(frame, (mask2 * (1.0 / 255)))
+                                output = temp1 + temp2
+                
+                            frame = output = np.uint8(output)
 
-                    
-
-                cv2.imshow('landmark', frame)   
+                        cv2.imshow('Face Filter', frame)
 
             if option != '0':
                 out.write(frame)
@@ -222,8 +285,17 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
         else:
             break
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        keypressed =  cv2.waitKey(1) & 0xFF
+        if keypressed == ord('q'):
             break
+        elif keypressed == ord('f'):
+            try:
+                filters, multi_filter_runtime = load_filter(next(iter_filter_keys))
+            except:
+                iter_filter_keys = iter(filters_config.keys())
+                filters, multi_filter_runtime = load_filter(next(iter_filter_keys))
+            
+            count += 1
 
     capture.release()
     if option != '0':
