@@ -20,8 +20,7 @@ import math, time
 from notebooks.kalman import KalmanFilter
 import notebooks.faceBlendCommon as fbc
 import csv
-VISUALIZE_LANDMARKS = True
-VISUALIZE_FILTER = False
+VISUALIZE_LANDMARKS = False
 
 filters_config = {
     'naruto':
@@ -211,6 +210,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                             cv2.circle(frame, tuple(map(int, tp.getPoint())), 3, (0, 0, 255) if tp.isPredicted() else (0, 255, 0), cv2.FILLED)
                         cv2.imshow('landmark', frame)
                     else:
+                        points3 = [tp.getPoint() for tp in trackPoints]
                         for idx, filter in enumerate(filters):
                             filter_runtime = multi_filter_runtime[idx]
                             img1 = filter_runtime['img']
@@ -228,7 +228,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                                 # Find convex hull
                                 hull2 = []
                                 for i in range(0, len(hullIndex)):
-                                    hull2.append(trackPoints[hullIndex[i][0]])
+                                    hull2.append(points3[hullIndex[i][0]])
                 
                                 mask1 = np.zeros((warped_img.shape[0], warped_img.shape[1]), dtype=np.float32)
                                 mask1 = cv2.merge((mask1, mask1, mask1))
@@ -256,7 +256,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                                 temp2 = np.multiply(frame, (mask2 * (1.0 / 255)))
                                 output = temp1 + temp2
                             else:
-                                dst_points = [trackPoints[int(list(points1.keys())[0])], trackPoints[int(list(points1.keys())[1])]]
+                                dst_points = [points3[int(list(points1.keys())[0])], points3[int(list(points1.keys())[1])]]
                                 tform = fbc.similarityTransform(list(points1.values()), dst_points)
                                 # Apply similarity transform to input image
                                 trans_img = cv2.warpAffine(img1, tform, (frame.shape[1], frame.shape[0]))
