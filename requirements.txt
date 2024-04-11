@@ -28,5 +28,8 @@ lightning==2.*
 matplotlib==3.7.2
 rootutils
 pandas==2.0.3
-deepface==0.0.79
+tensorflow==2.16.1
+tf-keras==2.16.0
+deepface==0.0.89
+ultralytics==8.1.46
 gdown

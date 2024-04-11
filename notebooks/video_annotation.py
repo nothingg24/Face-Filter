@@ -4,7 +4,6 @@ from typing import Optional
 from omegaconf import DictConfig
 import hydra
 from src.models.dlib_module import DLIBLitModule
-from deepface.detectors import FaceDetector
 from deepface import DeepFace
 import torch
 import numpy as np
@@ -21,7 +20,7 @@ from notebooks.kalman import KalmanFilter
 import notebooks.faceBlendCommon as fbc
 import csv, gdown, os
 
-VISUALIZE_LANDMARKS = False
+VISUALIZE_LANDMARKS = True
 MODEL_OPTION = 2
 
 filters_config = {
@@ -139,7 +138,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                             ToTensorV2()
                             ])
 
-    detector_name = "ssd"
+    detector_name = "yolov8"
 
     capture = cv2.VideoCapture(0)
     if option != '0':

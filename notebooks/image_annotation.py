@@ -4,7 +4,6 @@ from typing import Optional
 from omegaconf import DictConfig
 import hydra
 from src.models.dlib_module import DLIBLitModule
-from deepface.detectors import FaceDetector
 from deepface import DeepFace
 import torch
 import numpy as np
@@ -192,7 +191,7 @@ def detect(img_path: str, cfg: DictConfig) -> None:
                             ToTensorV2()
                             ])
 
-    detector_name = "ssd"
+    detector_name = "yolov8"
 
     img = Image.open(img_path).convert('RGB')
     width, height = img.size
