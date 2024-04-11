@@ -136,10 +136,6 @@ def load_filter(filter_name: str = 'naruto'):
         temp_dict['img'] = img1
         temp_dict['img_a'] = img1_alpha
 
-        # pil_img1 = Image.open(filter['path']).convert('RGB')
-        # w, h = pil_img1.size
- 
-        # points = (get_filter_landmarks(filter['anno_path']) / np.array([100, 100]))  * np.array([w, h])
         points = load_filter_landmarks(filter['anno_path'])
  
         temp_dict['points'] = points
@@ -169,18 +165,22 @@ def load_filter(filter_name: str = 'naruto'):
     return filters, multi_filter_runtime
 
 def download_model(option: int)-> str:
-    if os.path.isfile('checkpoints/${option}/last.ckpt'):
+    if os.path.isfile(f'checkpoints/{option}/last.ckpt'):
         print('Model already downloaded')
-        return 'checkpoints/${option}/last.ckpt'
+        return f'checkpoints/{option}/last.ckpt'
+    if not os.path.exists(f'checkpoints/{option}'):
+        os.makedirs(f'checkpoints/{option}')
     if (option == 1):
         url='https://drive.google.com/file/d/1-iQWYx2BW0OkiQlN6W78avS8e1d-2Xhc/view?usp=sharing'
     if (option == 2):
         url='https://drive.google.com/file/d/17dyMWOMivfqrmvojgl2fs6ul0v1MEAVS/view?usp=sharing'
-    gdown.download(url=url,output='checkpoints/${option}/last.ckpt',quiet=False,use_cookies=False,fuzzy=True)
-    return 'checkpoints/${option}/last.ckpt'
+    gdown.download(url=url,output=f'checkpoints/{option}/last.ckpt',quiet=False,use_cookies=False,fuzzy=True)
+    return f'checkpoints/{option}/last.ckpt'
 
 def detect(img_path: str, cfg: DictConfig) -> None:
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if (device == 'cpu'):
+        os.environ['TF_ENABLE_ONEDNN_OPTS'] = 0
 
     net = hydra.utils.instantiate(cfg.net)
     checkpoint_path = download_model(MODEL_OPTION)
