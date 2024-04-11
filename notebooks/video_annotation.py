@@ -19,8 +19,10 @@ from PIL import Image, ImageDraw
 import math, time
 from notebooks.kalman import KalmanFilter
 import notebooks.faceBlendCommon as fbc
-import csv
+import csv, gdown, os
+
 VISUALIZE_LANDMARKS = False
+MODEL_OPTION = 2
 
 filters_config = {
     'naruto':
@@ -109,11 +111,23 @@ def load_filter(filter_name: str = 'naruto'):
 
     return filters, multi_filter_runtime
 
+def download_model(option: int)-> str:
+    if os.path.isfile('checkpoints/${option}/last.ckpt'):
+        print('Model already downloaded')
+        return 'checkpoints/${option}/last.ckpt'
+    if (option == 1):
+        url='https://drive.google.com/file/d/1-iQWYx2BW0OkiQlN6W78avS8e1d-2Xhc/view?usp=sharing'
+    if (option == 2):
+        url='https://drive.google.com/file/d/17dyMWOMivfqrmvojgl2fs6ul0v1MEAVS/view?usp=sharing'
+    gdown.download(url=url,output='checkpoints/${option}/last.ckpt',quiet=False,use_cookies=False,fuzzy=True)
+    return 'checkpoints/${option}/last.ckpt'
+
 def detect(cfg: DictConfig, option: Optional[str] = None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     net = hydra.utils.instantiate(cfg.net)
-    model = DLIBLitModule.load_from_checkpoint(checkpoint_path='logs/train/runs/2024-04-04_13-19-41/checkpoints/last.ckpt', net=net) #logs/train/runs/2024-02-22_14-14-53/checkpoints/last.ckpt
+    checkpoint_path = download_model(MODEL_OPTION)
+    model = DLIBLitModule.load_from_checkpoint(checkpoint_path=checkpoint_path, net=net)
     model = model.to(device) 
 
     transform = A.Compose([A.Resize(224, 224),
