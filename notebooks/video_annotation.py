@@ -18,6 +18,96 @@ import PIL
 from PIL import Image, ImageDraw
 import math, time
 from notebooks.kalman import KalmanFilter
+import notebooks.faceBlendCommon as fbc
+VISUALIZE_LANDMARKS = True
+VISUALIZE_FILTER = False
+
+filters_config = {
+    'naruto':
+        [{'path': 'filter/image/naruto.png',
+          'anno_path': 'filter/annotations/naruto.csv', #naruto.svg
+          'morph': True, 'animated': False, 'has_alpha': True
+        }],
+}
+
+def load_filter_landmarks(annotation_file: str) -> np.array:
+    with open(annotation_file) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=",")
+        points = {}
+        for i, row in enumerate(csv_reader):
+            # skip head or empty line if it's there
+            try:
+                x, y = int(row[1]), int(row[2])
+                points[row[0]] = (x, y)
+            except ValueError:
+                continue
+        return points
+
+def get_filter_image(img_path, has_alpha):
+    img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
+ 
+    alpha = None
+    if has_alpha:
+        b, g, r, alpha = cv2.split(img)
+        img = cv2.merge((b, g, r))
+ 
+    return img, alpha
+
+def find_convex_hull(points: np.array):
+    hull = []
+    hullIndex = cv2.convexHull(np.array(list(points.values())), clockwise=False, returnPoints=False)
+    addPoints = [
+        [48], [49], [50], [51], [52], [53], [54], [55], [56], [57], [58], [59],  # Outer lips
+        [60], [61], [62], [63], [64], [65], [66], [67],  # Inner lips
+        [27], [28], [29], [30], [31], [32], [33], [34], [35],  # Nose
+        [36], [37], [38], [39], [40], [41], [42], [43], [44], [45], [46], [47],  # Eyes
+        [17], [18], [19], [20], [21], [22], [23], [24], [25], [26]  # Eyebrows
+    ]
+    hullIndex = np.concatenate((hullIndex, addPoints))
+    for i in range(0, len(hullIndex)):
+        hull.append(points[str(hullIndex[i][0])]) #int
+ 
+    return hull, hullIndex
+
+def load_filter(filter_name: str = 'naruto'):
+    filters = filters_config[filter_name]
+    multi_filter_runtime = []
+
+    for filter in filters:
+        temp_dict = {}
+ 
+        img1, img1_alpha = get_filter_image(filter['path'], filter['has_alpha'])
+ 
+        temp_dict['img'] = img1
+        temp_dict['img_a'] = img1_alpha
+ 
+        points = load_filter_landmarks(filter['anno_path'])
+ 
+        temp_dict['points'] = points
+ 
+        if filter['morph']:
+            # Find convex hull for delaunay triangulation using the landmark points
+            hull, hullIndex = find_convex_hull(points)
+ 
+            # Find Delaunay triangulation for convex hull points
+            sizeImg1 = img1.shape
+            rect = (0, 0, sizeImg1[1], sizeImg1[0])
+            dt = fbc.calculateDelaunayTriangles(rect, hull)
+ 
+            temp_dict['hull'] = hull
+            temp_dict['hullIndex'] = hullIndex
+            temp_dict['dt'] = dt
+ 
+            if len(dt) == 0:
+                continue
+ 
+        if filter['animated']:
+            filter_cap = cv2.VideoCapture(filter['path'])
+            temp_dict['cap'] = filter_cap
+ 
+        multi_filter_runtime.append(temp_dict)
+
+    return filters, multi_filter_runtime
 
 def detect(cfg: DictConfig, option: Optional[str] = None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -34,10 +124,8 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
     detector_name = "ssd"
 
     capture = cv2.VideoCapture(0)
-    # prev_frame_time = 0
-    # new_frame_time = 0
     if option != '0':
-        fourcc = -1 #cv2.VideoWriter_fourcc(*'MP4V')
+        fourcc = -1 
         width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = capture.get(cv2.CAP_PROP_FPS)
@@ -54,16 +142,10 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
         if ret:
             img_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             font = cv2.FONT_HERSHEY_SIMPLEX
-            # new_frame_time = time.time()
-            # fps = 1 / (new_frame_time - prev_frame_time)
-            # prev_frame_time = new_frame_time
-            # fps = int(fps)
-            # fps = str(fps)
             fps = int(capture.get(cv2.CAP_PROP_FPS))
             fps = str(fps)
             cv2.putText(frame, fps, (7, 70), font, 3, (100, 255, 0), 3, cv2.LINE_AA)
             faces = DeepFace.extract_faces(img_path=img_frame, target_size=(224, 224), detector_backend=detector_name, enforce_detection=False)
-            # face = faces[0]
             if faces is not None:
                 for face in faces:
                     bbox = None
@@ -92,12 +174,10 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                     else:
                         KalmanFilter.trackpoints(img2GrayPrev, img2Gray, bbox_points, trackBbox)
 
+                    #if VISUALIZE_LANDMARKS:
                     cv2.rectangle(frame, tuple(map(int, trackBbox[0].getPoint())), tuple(map(int, trackBbox[1].getPoint())), (0, 255, 0), 2)
 
-                    # cv2.rectangle(frame, (int(bbox['x']), int(bbox['y'])), (int(bbox['x'] + bbox['w']), int(bbox['y'] + bbox['h'])), (0, 255, 0), 2)
-
                     img_frame = Image.fromarray(img_frame)
-                    # input = img_frame.crop((bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']))
                     input = img_frame.crop((trackBbox[0].getPoint()[0], trackBbox[0].getPoint()[1], trackBbox[1].getPoint()[0], trackBbox[1].getPoint()[1]))
                     input = np.array(input)
                     transformed = transform(image=input)
@@ -111,7 +191,8 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                     img2Gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
                     if isFirstFrame:
-                        points2Prev = np.array(points2, np.float32)
+                        #points2Prev = np.array(points2, np.float32)
+                        #points2Prev = points2
                         img2GrayPrev = np.copy(img2Gray)
                         isFirstFrame = False
 
@@ -121,29 +202,13 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                     else:
                         KalmanFilter.trackpoints(img2GrayPrev, img2Gray, points2, trackPoints)
 
-                    # lk_params = dict(winSize=(101, 101), maxLevel=15,
-                    #                 criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.001))
-
-                    # points2Next, st, err = cv2.calcOpticalFlowPyrLK(img2GrayPrev, img2Gray, points2Prev,
-                    #                                                 np.array(points2, np.float32), #None
-                    #                                                 **lk_params)
-                    
-                    # for k in range(0, len(points2)):
-                    #     d = cv2.norm(np.array(points2[k]) - points2Next[k])
-                    #     alpha = math.exp(-d * d / sigma)
-                    #     points2[k] = (1 - alpha) * np.array(points2[k]) + alpha * points2Next[k]
-                    #     points2[k] = (min(max(points2[k][0], 0), frame.shape[1] - 1), min(max(points2[k][1], 0), frame.shape[0] - 1))
-                    #     points2[k] = (int(points2[k][0]), int(points2[k][1]))
-
-                    # points2Prev = np.array(trackPoints, np.float32) #points2
                     img2GrayPrev = img2Gray
+                    #points2Prev = trackPoints
 
-                    # for point in points2:
-                    #     cv2.circle(frame, (int(point[0]), int(point[1])), 2, (0, 255, 0), -1)
-
+                    #if VISUALIZE_LANDMARKS:
                     for tp in trackPoints:
                         cv2.circle(frame, tuple(map(int, tp.getPoint())), 3, (0, 0, 255) if tp.isPredicted() else (0, 255, 0), cv2.FILLED)
-                        # cv2.circle(frame, (int(tp.getPoint()[0]), int(tp.getPoint()[1])), 2, (0, 0, 255), -1)
+                    #else:
 
                     
 
@@ -172,6 +237,6 @@ if __name__ == "__main__":
 
     @hydra.main(version_base=None, config_path=config_path, config_name="dlib.yaml")
     def main(cfg: DictConfig):
-        detect(cfg=cfg, option=0) #'output.mp4'
+        detect(cfg=cfg, option=0)
 
     main()
