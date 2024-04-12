@@ -181,24 +181,26 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                         'h': old_bbox['h'] + 2 * extend_y
                     }
                     bbox = new_bbox
-                    bbox_item = bbox.items()
-                    bbox_item = list(bbox_item)
+                    # bbox_item = bbox.items()
+                    # bbox_item = list(bbox_item)
 
-                    top_left = KalmanFilter((bbox['x'], bbox['y']))
-                    bottom_right = KalmanFilter((bbox['x'] + bbox['w'], bbox['y'] + bbox['h']))
-                    bbox_points = [top_left, bottom_right]
+                    # top_left = KalmanFilter((bbox['x'], bbox['y']))
+                    # bottom_right = KalmanFilter((bbox['x'] + bbox['w'], bbox['y'] + bbox['h']))
+                    # bbox_points = [top_left, bottom_right]
 
-                    trackBbox = []
-                    if len(trackBbox) == 0:
-                        trackBbox = [KalmanFilter(point.getPoint()) for point in bbox_points]
-                    else:
-                        KalmanFilter.trackpoints(img2GrayPrev, img2Gray, bbox_points, trackBbox)
+                    # trackBbox = []
+                    # if len(trackBbox) == 0:
+                    #     trackBbox = [KalmanFilter(point.getPoint()) for point in bbox_points]
+                    # else:
+                    #     KalmanFilter.trackpoints(img2GrayPrev, img2Gray, bbox_points, trackBbox)
 
                     if VISUALIZE_LANDMARKS:
-                        cv2.rectangle(frame, tuple(map(int, trackBbox[0].getPoint())), tuple(map(int, trackBbox[1].getPoint())), (0, 255, 0), 2)
+                        # cv2.rectangle(frame, tuple(map(int, trackBbox[0].getPoint())), tuple(map(int, trackBbox[1].getPoint())), (0, 255, 0), 2)
+                        cv2.rectangle(frame, (int(bbox['x']), int(bbox['y'])), (int(bbox['x'] + bbox['w']), int(bbox['y'] + bbox['h'])), (0, 255, 0), 2)
 
                     img_frame = Image.fromarray(img_frame)
-                    input = img_frame.crop((trackBbox[0].getPoint()[0], trackBbox[0].getPoint()[1], trackBbox[1].getPoint()[0], trackBbox[1].getPoint()[1]))
+                    # input = img_frame.crop((trackBbox[0].getPoint()[0], trackBbox[0].getPoint()[1], trackBbox[1].getPoint()[0], trackBbox[1].getPoint()[1]))
+                    input = img_frame.crop((bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']))
                     input = np.array(input)
                     transformed = transform(image=input)
                     transformed_input = torch.unsqueeze(transformed['image'], dim=0).to(device)
