@@ -7,8 +7,8 @@ class KalmanFilter: #(cv2.KalmanFilter)
         self.point = point
         self.kalman = cv2.KalmanFilter(4, 2, 0, cv2.CV_64F)
         self.is_predicted = False
-        self.deltaTime = 1 #0.2/1
-        self.accelNoiseMag = 1 #0.5/1
+        self.deltaTime = 0.2 #0.2/1
+        self.accelNoiseMag = 0.3 #0.3/1
         self.init()
 
     def init(self):
@@ -21,14 +21,14 @@ class KalmanFilter: #(cv2.KalmanFilter)
 
         cv2.setIdentity(self.kalman.measurementMatrix)
 
-        # self.kalman.processNoiseCov = np.array([[pow(self.deltaTime, 4.0) / 4.0, 0, pow(self.deltaTime, 3.0) / 2.0, 0],
-        #                                         [0, pow(self.deltaTime, 4.0) / 4.0, 0, pow(self.deltaTime, 3.0) / 2.0],
-        #                                         [pow(self.deltaTime, 3.0) / 2.0, 0, pow(self.deltaTime, 2.0), 0],
-        #                                         [0, pow(self.deltaTime, 3.0) / 2.0, 0, pow(self.deltaTime, 2.0)]], dtype=np.float64) * self.accelNoiseMag
+        self.kalman.processNoiseCov = np.array([[pow(self.deltaTime, 4.0) / 4.0, 0, pow(self.deltaTime, 3.0) / 2.0, 0],
+                                                [0, pow(self.deltaTime, 4.0) / 4.0, 0, pow(self.deltaTime, 3.0) / 2.0],
+                                                [pow(self.deltaTime, 3.0) / 2.0, 0, pow(self.deltaTime, 2.0), 0],
+                                                [0, pow(self.deltaTime, 3.0) / 2.0, 0, pow(self.deltaTime, 2.0)]], dtype=np.float64) * self.accelNoiseMag
         
-        cv2.setIdentity(self.kalman.processNoiseCov, 0.001)
+        # cv2.setIdentity(self.kalman.processNoiseCov, 0.001)
         cv2.setIdentity(self.kalman.measurementNoiseCov, 0.1)#0.1
-        cv2.setIdentity(self.kalman.errorCovPost, .1)#.1
+        cv2.setIdentity(self.kalman.errorCovPost, 0.1)
 
     def update(self, point):
         measurement = np.array([[np.float64(point[0])], [np.float64(point[1])]], dtype=np.float64)

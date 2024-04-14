@@ -20,7 +20,7 @@ from notebooks.kalman import KalmanFilter
 import notebooks.faceBlendCommon as fbc
 import csv, gdown, os
 
-VISUALIZE_LANDMARKS = False
+VISUALIZE_LANDMARKS = True
 MODEL_OPTION = 2
 
 filters_config = {
