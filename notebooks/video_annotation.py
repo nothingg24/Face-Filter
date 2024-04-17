@@ -142,13 +142,14 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
     if (device == 'cpu'):
         os.environ['TF_ENABLE_ONEDNN_OPTS'] = 0
 
-    net = hydra.utils.instantiate(cfg.net)
-    checkpoint_path = download_model(MODEL_OPTION)
-    model = DLIBLitModule.load_from_checkpoint(checkpoint_path=checkpoint_path, net=net)
-    model = model.to(device) 
-
-    file_path = get_onnx_model(MODEL_OPTION, cfg)
-    ort_session = onnxruntime.InferenceSession(file_path)
+    if INFERENCE_MODE == 'onnx':
+        file_path = get_onnx_model(MODEL_OPTION, cfg)
+        ort_session = onnxruntime.InferenceSession(file_path)
+    else:
+        net = hydra.utils.instantiate(cfg.net)
+        checkpoint_path = download_model(MODEL_OPTION)
+        model = DLIBLitModule.load_from_checkpoint(checkpoint_path=checkpoint_path, net=net)
+        model = model.to(device)
 
     transform = A.Compose([A.Resize(224, 224),
                             A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
