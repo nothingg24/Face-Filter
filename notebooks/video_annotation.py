@@ -147,6 +147,9 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
     model = DLIBLitModule.load_from_checkpoint(checkpoint_path=checkpoint_path, net=net)
     model = model.to(device) 
 
+    file_path = get_onnx_model(MODEL_OPTION, cfg)
+    ort_session = onnxruntime.InferenceSession(file_path)
+
     transform = A.Compose([A.Resize(224, 224),
                             A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                             ToTensorV2()
@@ -222,8 +225,6 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                     transformed_input = torch.unsqueeze(transformed['image'], dim=0).to(device)
 
                     if INFERENCE_MODE == 'onnx':
-                        file_path = get_onnx_model(MODEL_OPTION, cfg)
-                        ort_session = onnxruntime.InferenceSession(file_path)
                         ort_inputs = {ort_session.get_inputs()[0].name: transformed_input.numpy()}
                         ort_outs = ort_session.run(None, ort_inputs)
                         output = ort_outs[0].squeeze()
