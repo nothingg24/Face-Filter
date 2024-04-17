@@ -20,9 +20,11 @@ import notebooks.faceBlendCommon as fbc
 import csv
 import gdown
 import os
+import onnx, onnxruntime
 
 VISUALIZE_LANDMARKS = True
 MODEL_OPTION = 2
+INFERENCE_MODE = 'onnx'
 
 filters_config = {
     'naruto':
@@ -176,29 +178,64 @@ def download_model(option: int)-> str:
     gdown.download(url=url,output=f'checkpoints/{option}/last.ckpt',quiet=False,use_cookies=False,fuzzy=True)
     return f'checkpoints/{option}/last.ckpt'
 
+def get_onnx_model(option: int, cfg: DictConfig)-> str:
+    if os.path.isfile(f'checkpoints/{option}/model.onnx'):
+        print('Model already downloaded')
+        return f'checkpoints/{option}/model.onnx'
+    if not os.path.exists(f'checkpoints/{option}'):
+        os.makedirs(f'checkpoints/{option}')
+    model_path = download_model(option=option)
+    model = DLIBLitModule.load_from_checkpoint(checkpoint_path=model_path, net=hydra.utils.instantiate(cfg.net))
+    file_path = f'checkpoints/{option}/model.onnx'
+    model.to_onnx(file_path=file_path, input_sample=torch.rand(1, 3, 224, 224), export_params=True)
+    return f'checkpoints/{option}/model.onnx'
+
+def inference_onnx(img: Image, bbox: dict, transform: A.Compose, file_path: str) -> np.array:
+    input = img.crop((bbox['x'], bbox['y'], bbox['x'] + bbox['w'], bbox['y'] + bbox['h']))
+    input = np.array(input)
+    transformed = transform(image=input)
+    transformed_input = torch.unsqueeze(transformed['image'], dim=0)
+    ort_session = onnxruntime.InferenceSession(file_path)
+    ort_inputs = {ort_session.get_inputs()[0].name: transformed_input.numpy()}
+    ort_outs = ort_session.run(None, ort_inputs)
+    output = ort_outs[0].squeeze()
+    output = (output + 0.5) * np.array([bbox['w'], bbox['h']]) + np.array([bbox['x'], bbox['y']])
+    return output
+
 def detect(img_path: str, cfg: DictConfig) -> None:
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if (device == 'cpu'):
         os.environ['TF_ENABLE_ONEDNN_OPTS'] = 0
 
-    net = hydra.utils.instantiate(cfg.net)
-    checkpoint_path = download_model(MODEL_OPTION)
-    model = DLIBLitModule.load_from_checkpoint(checkpoint_path=checkpoint_path, net=net)
-    model = model.to(device)
+    if INFERENCE_MODE == 'onnx':
+        transform = A.Compose([A.Resize(224, 224),
+                                A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                                ToTensorV2()
+                                ])
+        
+        file_path = get_onnx_model(MODEL_OPTION, cfg)
+        img = Image.open(img_path).convert('RGB')
+        detector_name = "yolov8"
+        bbox = face_detection(img_path, detector_name)
+        landmarks = inference_onnx(img, bbox, transform, file_path)
+    else:
+        net = hydra.utils.instantiate(cfg.net)
+        checkpoint_path = download_model(MODEL_OPTION)
+        model = DLIBLitModule.load_from_checkpoint(checkpoint_path=checkpoint_path, net=net)
+        model = model.to(device)
 
-    transform = A.Compose([A.Resize(224, 224),
-                            A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-                            ToTensorV2()
-                            ])
+        transform = A.Compose([A.Resize(224, 224),
+                                A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                                ToTensorV2()
+                                ])
 
-    detector_name = "yolov8"
+        detector_name = "yolov8"
 
-    img = Image.open(img_path).convert('RGB')
-    width, height = img.size
+        img = Image.open(img_path).convert('RGB')
 
-    bbox = face_detection(img_path, detector_name)
+        bbox = face_detection(img_path, detector_name)
 
-    landmarks = inference(img, bbox, model, transform, device)
+        landmarks = inference(img, bbox, model, transform, device)
 
     if VISUALIZE_LANDMARKS:
         img = visualize_bbox(img, bbox)

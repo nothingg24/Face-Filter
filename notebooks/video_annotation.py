@@ -18,9 +18,10 @@ from PIL import Image, ImageDraw
 import math, time
 from notebooks.kalman import KalmanFilter
 import notebooks.faceBlendCommon as fbc
-import csv, gdown, os
+import csv, gdown, os, onnx, onnxruntime
 
 VISUALIZE_LANDMARKS = True
+INFERENCE_MODE = 'onnx'
 MODEL_OPTION = 2
 
 filters_config = {
@@ -123,6 +124,19 @@ def download_model(option: int)-> str:
     gdown.download(url=url,output=f'checkpoints/{option}/last.ckpt',quiet=False,use_cookies=False,fuzzy=True)
     return f'checkpoints/{option}/last.ckpt'
 
+def get_onnx_model(option: int, cfg: DictConfig)-> str:
+    if os.path.isfile(f'checkpoints/{option}/model.onnx'):
+        print('Model already downloaded')
+        return f'checkpoints/{option}/model.onnx'
+    if not os.path.exists(f'checkpoints/{option}'):
+        os.makedirs(f'checkpoints/{option}')
+    model_path = download_model(option=option)
+    model = DLIBLitModule.load_from_checkpoint(checkpoint_path=model_path, net=hydra.utils.instantiate(cfg.net))
+    file_path = f'checkpoints/{option}/model.onnx'
+    model.to_onnx(file_path=file_path, input_sample=torch.rand(1, 3, 224, 224), export_params=True)
+    return f'checkpoints/{option}/model.onnx'
+
+
 def detect(cfg: DictConfig, option: Optional[str] = None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if (device == 'cpu'):
@@ -206,10 +220,19 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                     input = np.array(input)
                     transformed = transform(image=input)
                     transformed_input = torch.unsqueeze(transformed['image'], dim=0).to(device)
-                    model.eval()
-                    with torch.inference_mode():
-                        output = model(transformed_input).squeeze()
-                    output = (output + 0.5) * np.array([bbox['w'], bbox['h']]) + np.array([bbox['x'], bbox['y']])
+
+                    if INFERENCE_MODE == 'onnx':
+                        file_path = get_onnx_model(MODEL_OPTION, cfg)
+                        ort_session = onnxruntime.InferenceSession(file_path)
+                        ort_inputs = {ort_session.get_inputs()[0].name: transformed_input.numpy()}
+                        ort_outs = ort_session.run(None, ort_inputs)
+                        output = ort_outs[0].squeeze()
+                        output = (output + 0.5) * np.array([bbox['w'], bbox['h']]) + np.array([bbox['x'], bbox['y']])
+                    else:
+                        model.eval()
+                        with torch.inference_mode():
+                            output = model(transformed_input).squeeze()
+                        output = (output + 0.5) * np.array([bbox['w'], bbox['h']]) + np.array([bbox['x'], bbox['y']])
                     
                     points2 = output.tolist()
                     img2Gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
