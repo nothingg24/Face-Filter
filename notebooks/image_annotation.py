@@ -22,7 +22,7 @@ import gdown
 import os
 import onnx, onnxruntime
 
-VISUALIZE_LANDMARKS = True
+VISUALIZE_LANDMARKS = False
 MODEL_OPTION = 2
 INFERENCE_MODE = 'onnx'
 
