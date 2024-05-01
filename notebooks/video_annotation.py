@@ -144,7 +144,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
 
     if INFERENCE_MODE == 'onnx':
         file_path = get_onnx_model(MODEL_OPTION, cfg)
-        ort_session = onnxruntime.InferenceSession(file_path)
+        ort_session = onnxruntime.InferenceSession(file_path, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
     else:
         net = hydra.utils.instantiate(cfg.net)
         checkpoint_path = download_model(MODEL_OPTION)
