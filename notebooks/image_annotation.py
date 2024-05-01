@@ -4,7 +4,7 @@ from typing import Optional
 from omegaconf import DictConfig
 import hydra
 from src.models.dlib_module import DLIBLitModule
-from deepface import DeepFace
+# from deepface import DeepFace
 import torch
 import numpy as np
 import albumentations as A
@@ -21,8 +21,9 @@ import csv
 import gdown
 import os
 import onnx, onnxruntime
+from notebooks.detect import Detection
 
-VISUALIZE_LANDMARKS = False
+VISUALIZE_LANDMARKS = True
 MODEL_OPTION = 2
 INFERENCE_MODE = 'onnx'
 
@@ -200,10 +201,15 @@ def inference_onnx(img: Image, bbox: dict, transform: A.Compose, file_path: str)
 
 def detect(img_path: str, cfg: DictConfig) -> None:
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    if (device == 'cpu'):
-        os.environ['TF_ENABLE_ONEDNN_OPTS'] = 0
-    detector_backend = "yolov8"
-    faces = DeepFace.extract_faces(img_path=img_path, target_size=(224, 224), detector_backend=detector_backend)
+
+    # if (device == 'cpu'):
+    #     os.environ['TF_ENABLE_ONEDNN_OPTS'] = 0
+    # detector_backend = "yolov8"
+    # faces = DeepFace.extract_faces(img_path=img_path, target_size=(224, 224), detector_backend=detector_backend)
+
+    detector = Detection(model_name='yolov8n-face')
+    faces = detector.detect_faces(img_path=img_path)
+
     img = Image.open(img_path).convert('RGB')
     transform = A.Compose([A.Resize(224, 224),
                                 A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
