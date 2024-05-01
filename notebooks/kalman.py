@@ -7,8 +7,8 @@ class KalmanFilter: #(cv2.KalmanFilter)
         self.point = point
         self.kalman = cv2.KalmanFilter(4, 2, 0, cv2.CV_64F)
         self.is_predicted = False
-        self.deltaTime = 0.2 #0.2/1
-        self.accelNoiseMag = 0.3 #0.3/1
+        self.deltaTime = 0.5 #0.2/1
+        self.accelNoiseMag = 0.7 #0.3/1
         self.init()
 
     def init(self):
@@ -65,8 +65,10 @@ class KalmanFilter: #(cv2.KalmanFilter)
     def trackpoints(prevFrame, currFrame, currLandmarks, trackPoints):
         # lk_params = dict(winSize=(7, 7), maxLevel=3,
         #                  criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 0.01), flags=0, minEigThreshold=0.001)
-        lk_params = dict(winSize=(101, 101), maxLevel=15,
-                                    criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.001))
+        # lk_params = dict(winSize=(101, 101), maxLevel=15,
+        #                             criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.001))
+        lk_params = dict(winSize=(15, 15), maxLevel=2,
+                         criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03), flags=0, minEigThreshold=0.001)
         prevLandmarks = [pts.getPoint() for pts in trackPoints]
 
         newLandmarks, status, err = cv2.calcOpticalFlowPyrLK(prevFrame, currFrame, prevLandmarks,

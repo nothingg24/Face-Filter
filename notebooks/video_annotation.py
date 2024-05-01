@@ -188,6 +188,8 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                 for face in faces:
                     bbox = None
                     old_bbox = face['facial_area']
+                    if face['confidence'] < 0.5:
+                        continue
                     if old_bbox['w'] == int(capture.get(cv2.CAP_PROP_FRAME_WIDTH)):
                         break
                     extend_x = old_bbox['w'] * 0.1
