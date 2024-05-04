@@ -1,6 +1,6 @@
 from ultralytics import YOLO
 import os
-from typing import List
+from typing import List, Tuple
 import gdown
 import onnxruntime
 from PIL import Image
@@ -8,6 +8,7 @@ import numpy as np
 import albumentations as A
 from albumentations.pytorch.transforms import ToTensorV2
 import torch
+from ultralytics.utils import ops
 
 class Detection:
     def __init__(self, model_name: str):
@@ -39,14 +40,13 @@ class Detection:
     def build_onnx(self) -> str:
         if os.path.isfile(f'checkpoints/detect/{self.model_name}.onnx'):
             return f'checkpoints/detect/{self.model_name}.onnx'
-        self.model.export(format='onnx')
+        self.model.export(format='onnx', imgsz=640, half=False, dynamic=True, simplify=True, opset=None)
         onnx_path = f'checkpoints/detect/{self.model_name}.onnx'
         return onnx_path
     
     def detect_faces(self, img_path: str) -> List[dict]:
         faces = []
         results = self.model.predict(img_path, verbose=False, show=False, conf=0.25)[0]
-
         for result in results:
             if result.boxes is None or result.keypoints is None:
                 continue
@@ -70,41 +70,6 @@ class Detection:
                     "h": int(h),
                     "left_eye": left_eye,
                     "right_eye": right_eye,
-                },
-                "confidence": round(confidence, 2)
-            }
-
-            faces.append(face)
-        
-        return faces
-    
-    def detect_faces_onnx(self, img_path: str) -> List[dict]:
-        faces = []
-        transform = A.Compose([A.Resize(640, 640),
-                                A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-                                ToTensorV2()
-                                ])
-        ort_session = onnxruntime.InferenceSession(self.onnx_path)
-        img = Image.open(img_path).convert('RGB')
-        img = np.array(img)
-        img = transform(image=img)['image']
-        img = torch.unsqueeze(img, dim=0).numpy()
-
-        ort_inputs = {ort_session.get_inputs()[0].name: img}
-        ort_outs = ort_session.run(None, ort_inputs)
-        results = ort_outs[0].squeeze()
-        for result in results:
-            x, y, w, h = result[:, :4]
-            confidence = result[:, 4]
-
-            x, y, w, h = int(x - w / 2), int(y - h / 2), int(w), int(h)
-
-            face = {
-                "facial_area": {
-                    "x": int(x),
-                    "y": int(y),
-                    "w": int(w),
-                    "h": int(h),
                 },
                 "confidence": round(confidence, 2)
             }
