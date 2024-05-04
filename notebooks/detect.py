@@ -11,7 +11,7 @@ import torch
 from ultralytics.utils import ops
 
 class Detection:
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str='yolov8n-face'):
         self.model_name = model_name
         self.model_path = self.download_model()
         self.model = YOLO(self.model_path)
@@ -47,6 +47,41 @@ class Detection:
     def detect_faces(self, img_path: str) -> List[dict]:
         faces = []
         results = self.model.predict(img_path, verbose=False, show=False, conf=0.25)[0]
+        for result in results:
+            if result.boxes is None or result.keypoints is None:
+                continue
+
+            x, y, w, h = result.boxes.xywh.tolist()[0]
+            confidence = result.boxes.conf.tolist()[0]
+
+            right_eye = result.keypoints.xy[0][0].tolist()
+            left_eye = result.keypoints.xy[0][1].tolist()
+
+            left_eye = tuple(int(i) for i in left_eye)
+            right_eye = tuple(int(i) for i in right_eye)
+
+            x, y, w, h = int(x - w / 2), int(y - h / 2), int(w), int(h)
+
+            face = {
+                "facial_area": {
+                    "x": int(x),
+                    "y": int(y),
+                    "w": int(w),
+                    "h": int(h),
+                    "left_eye": left_eye,
+                    "right_eye": right_eye,
+                },
+                "confidence": round(confidence, 2)
+            }
+
+            faces.append(face)
+        
+        return faces
+    
+    def detect_face_frame(self, frame: np.ndarray):
+        faces = []
+        results = self.model.predict(frame, verbose=False, show=False, conf=0.25)[0]
+
         for result in results:
             if result.boxes is None or result.keypoints is None:
                 continue

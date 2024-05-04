@@ -207,8 +207,9 @@ def detect(img_path: str, cfg: DictConfig) -> None:
     # detector_backend = "yolov8"
     # faces = DeepFace.extract_faces(img_path=img_path, target_size=(224, 224), detector_backend=detector_backend)
 
-    detector = Detection(model_name='yolov8n-face')
-    faces = detector.detect_faces(img_path=img_path)
+    # detector = Detection(model_name='yolov8n-face')
+    # faces = detector.detect_faces(img_path=img_path)
+    faces = Detection().detect_faces(img_path=img_path)
 
     img = Image.open(img_path).convert('RGB')
     transform = A.Compose([A.Resize(224, 224),

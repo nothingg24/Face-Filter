@@ -19,6 +19,7 @@ import math, time
 from notebooks.kalman import KalmanFilter
 import notebooks.faceBlendCommon as fbc
 import csv, gdown, os, onnx, onnxruntime
+from notebooks.detect import Detection
 
 VISUALIZE_LANDMARKS = True
 INFERENCE_MODE = 'onnx'
@@ -144,7 +145,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
 
     if INFERENCE_MODE == 'onnx':
         file_path = get_onnx_model(MODEL_OPTION, cfg)
-        ort_session = onnxruntime.InferenceSession(file_path, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+        ort_session = onnxruntime.InferenceSession(file_path)
     else:
         net = hydra.utils.instantiate(cfg.net)
         checkpoint_path = download_model(MODEL_OPTION)
@@ -157,6 +158,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                             ])
 
     detector_name = "yolov8"
+    # detector = Detection()
 
     capture = cv2.VideoCapture(0)
     if option != '0':
@@ -184,6 +186,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
             fps = str(fps)
             cv2.putText(frame, fps, (7, 70), font, 3, (100, 255, 0), 3, cv2.LINE_AA)
             faces = DeepFace.extract_faces(img_path=img_frame, target_size=(224, 224), detector_backend=detector_name, enforce_detection=False)
+            # faces = detector.detect_face_frame(img_frame)
             if faces is not None:
                 for face in faces:
                     bbox = None
