@@ -7,8 +7,8 @@ class KalmanFilter: #(cv2.KalmanFilter)
         self.point = point
         self.kalman = cv2.KalmanFilter(4, 2, 0, cv2.CV_64F)
         self.is_predicted = False
-        self.deltaTime = 0.7 #0.2/1/0.5
-        self.accelNoiseMag = 1 #0.3/1/0.7
+        self.deltaTime = 0.2 #0.2/1/0.5/0.7
+        self.accelNoiseMag = 0.3 #0.3/1/0.7/1
         self.init()
 
     def init(self):
