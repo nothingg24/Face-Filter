@@ -158,7 +158,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                             ])
 
     detector_name = "yolov8"
-    # detector = Detection()
+    detector = Detection()
 
     capture = cv2.VideoCapture(0)
     if option != '0':
@@ -185,8 +185,9 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
             fps = int(capture.get(cv2.CAP_PROP_FPS))
             fps = str(fps)
             cv2.putText(frame, fps, (7, 70), font, 3, (100, 255, 0), 3, cv2.LINE_AA)
-            faces = DeepFace.extract_faces(img_path=img_frame, target_size=(224, 224), detector_backend=detector_name, enforce_detection=False)
+            # faces = DeepFace.extract_faces(img_path=img_frame, target_size=(224, 224), detector_backend=detector_name, enforce_detection=False)
             # faces = detector.detect_face_frame(img_frame)
+            faces = detector.detect_face_video(frame)
             if faces is not None:
                 for face in faces:
                     bbox = None
