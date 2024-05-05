@@ -115,7 +115,7 @@ class Detection:
 
     def detect_face_video(self, frame: np.ndarray):
         faces = []
-        results = self.model.track(frame, conf=0.5, iou=0.7, show=False, persist=True, tracker="bytetrack.yaml")[0]
+        results = self.model.track(frame, conf=0.5, iou=0.7, show=False, verbose=False, persist=True, tracker="bytetrack.yaml")[0]
 
         for result in results:
             if result.boxes is None or result.keypoints is None:
