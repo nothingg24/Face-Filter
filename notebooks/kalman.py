@@ -67,7 +67,7 @@ class KalmanFilter: #(cv2.KalmanFilter)
         #                  criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 0.01), flags=0, minEigThreshold=0.001)
         # lk_params = dict(winSize=(101, 101), maxLevel=15,
         #                             criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 20, 0.001))
-        lk_params = dict(winSize=(15, 15), maxLevel=2,
+        lk_params = dict(winSize=(20, 20), maxLevel=2, #(15, 15), 2
                          criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03), flags=0, minEigThreshold=0.001)
         prevLandmarks = [pts.getPoint() for pts in trackPoints]
 
