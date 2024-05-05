@@ -187,13 +187,13 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
             cv2.putText(frame, fps, (7, 70), font, 3, (100, 255, 0), 3, cv2.LINE_AA)
             # faces = DeepFace.extract_faces(img_path=img_frame, target_size=(224, 224), detector_backend=detector_name, enforce_detection=False)
             # faces = detector.detect_face_frame(img_frame)
-            faces = detector.detect_face_video(frame)
+            faces = detector.detect_face_video(img_frame)
             if faces is not None:
                 for face in faces:
                     bbox = None
                     old_bbox = face['facial_area']
-                    if face['confidence'] < 0.5:
-                        continue
+                    # if face['confidence'] < 0.5:
+                    #     continue
                     if old_bbox['w'] == int(capture.get(cv2.CAP_PROP_FRAME_WIDTH)):
                         break
                     extend_x = old_bbox['w'] * 0.1
