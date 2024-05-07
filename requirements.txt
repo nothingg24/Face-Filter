@@ -35,3 +35,4 @@ ultralytics==8.1.46
 gdown
 onnx==1.16.0
 onnxruntime==1.17.3
+mediapipe==0.10.13
