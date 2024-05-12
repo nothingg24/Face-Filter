@@ -73,7 +73,7 @@ class KalmanFilter: #(cv2.KalmanFilter)
                          criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03), flags=0, minEigThreshold=0.001)
         prevLandmarks = [pts.getPoint() for pts in trackPoints]
 
-        newLandmarks, status, err = cv2.calcOpticalFlowPyrLK(prevFrame, currFrame, prevLandmarks,
+        newLandmarks, status, err = cv2.calcOpticalFlowPyrLK(prevFrame, currFrame, prevLandmarks,#np.array(prevLandmarks, dtype=np.float32)/prevLandmarks
                                                              np.array(currLandmarks, dtype=np.float64), **lk_params) #np.array(currLandmarks, dtype=np.float64)/None
         
         for i in range(len(status)):

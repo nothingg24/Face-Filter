@@ -137,6 +137,25 @@ def get_onnx_model(option: int, cfg: DictConfig)-> str:
     model.to_onnx(file_path=file_path, input_sample=torch.rand(1, 3, 224, 224), export_params=True)
     return f'checkpoints/{option}/model.onnx'
 
+def trackpoints(prevFrame, currFrame, currLandmarks, trackPoints):
+    lk_params = dict(winSize=(15, 15), maxLevel=2,
+                         criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03), flags=0, minEigThreshold=0.001)
+    prevLandmarks = [pts.getPoint() for pts in trackPoints]
+
+    newLandmarks, status, err = cv2.calcOpticalFlowPyrLK(prevFrame, currFrame, prevLandmarks,
+                                                             np.array(currLandmarks, dtype=np.float64), **lk_params)
+        
+    for i in range(len(status)):
+        if status[i]:
+            sigma = 50
+            d = cv2.norm(np.array(currLandmarks[i]) - newLandmarks[i])
+            alpha = math.exp(-d * d / sigma)
+            point = (1 - alpha) * np.array(currLandmarks[i]) + alpha * newLandmarks[i]
+            point = min(max(point[0], 0), currFrame.shape[1] - 1), min(max(point[1], 0), currFrame.shape[0] - 1)
+
+            trackPoints[i].update(point)
+        else:
+            trackPoints[i].update(currLandmarks[i])
 
 def detect(cfg: DictConfig, option: Optional[str] = None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -173,6 +192,8 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
     iter_filter_keys = iter(filters_config.keys())
     filters, multi_filter_runtime = load_filter(next(iter_filter_keys))
     count = 0
+    # trackPoints = []
+    # img2GrayPrev, img2Gray = None, None
 
     while (capture.isOpened()): #True
         ret, frame = capture.read()
@@ -245,15 +266,18 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
                     points2 = output.tolist()
                     img2Gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-                    if isFirstFrame:
+                    if isFirstFrame:#isFirstFrame/img2GrayPrev is None
                         img2GrayPrev = np.copy(img2Gray)
-                        isFirstFrame = False
-
+                        # trackPoints.clear()
+                        # trackPoints = [KalmanFilter(point) for point in points2]
+                        isFirstFrame = False 
+                    
                     trackPoints = []
+                    #else:
                     if len(trackPoints) == 0:
                         trackPoints = [KalmanFilter(point) for point in points2]
                     else:
-                        KalmanFilter.trackpoints(img2GrayPrev, img2Gray, points2, trackPoints)
+                        trackpoints(img2GrayPrev, img2Gray, points2, trackPoints)
 
                     img2GrayPrev = img2Gray
 
