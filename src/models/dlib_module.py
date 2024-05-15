@@ -7,6 +7,7 @@ from torchmetrics.regression import MeanAbsoluteError
 from src.models.components.nme import NME
 #from src.models.components.softwingloss import SoftWingLoss
 from src.models.components.loss import SoftWingLoss
+from src.models.components.fr import FR
 import torchvision, wandb, pyrootutils
 import numpy as np
 from PIL import ImageDraw, Image
@@ -129,6 +130,8 @@ class DLIBLitModule(LightningModule):
         self.val_nme = NME()
         self.test_nme = NME()
 
+        self.test_fr = FR()
+
         # for averaging loss across batches
         self.train_loss = MeanMetric()
         self.val_loss = MeanMetric()
@@ -223,9 +226,11 @@ class DLIBLitModule(LightningModule):
         self.test_loss(loss)
         self.test_err(preds, targets)
         self.test_nme(preds, targets)
+        self.test_fr(preds, targets)
         self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("test/err", self.test_err, on_step=False, on_epoch=True, prog_bar=True)
         self.log("test/nme", self.test_nme, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("test/fr", self.test_fr, on_step=False, on_epoch=True, prog_bar=True)
 
         return {"loss": loss, "preds": preds, "targets": targets}
 

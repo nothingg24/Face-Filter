@@ -3,6 +3,8 @@
 defaults:
   - _self_
   - data: dlib_lpa.yaml # dlib.yaml # choose datamodule with `test_dataloader()` for evaluation
+  - data/transform_train: default.yaml
+  - data/transform_val: default.yaml
   - model: dlib.yaml
   - logger: null
   - trainer: default.yaml
