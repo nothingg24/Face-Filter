@@ -67,8 +67,36 @@ Train model with chosen experiment configuration from [configs/experiment/](conf
 python src/train.py experiment=experiment_name.yaml
 ```
 
+Evaluation model with default configuration
+
+```bash
+# train on CPU
+python src/eval.py ckpt_path='checkpoints/2/last.ckpt' trainer=cpu
+
+# train on GPU
+python src/eval.py ckpt_path='checkpoints/2/last.ckpt' trainer=gpu
+```
+
 You can override any parameter from command line like this
 
 ```bash
 python src/train.py trainer.max_epochs=20 data.batch_size=64
+```
+
+Run image annotation
+
+```bash
+python notebooks/image_annotation.py
+```
+
+Run video annotation
+
+```bash
+python notebooks/video_annotation.py
+```
+
+Run video annotation with mediapipe
+
+```bash
+python notebooks/mediapipe_detect.py
 ```
