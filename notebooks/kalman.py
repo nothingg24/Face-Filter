@@ -5,6 +5,7 @@ import math
 class KalmanFilter: #(cv2.KalmanFilter)
     def __init__(self, point) -> None:
         self.point = point
+        # self.point = list(point)
         self.stateNum = 4
         self.measureNum = 2
         self.kalman = cv2.KalmanFilter(self.stateNum, self.measureNum, 0, cv2.CV_64F)
@@ -72,6 +73,7 @@ class KalmanFilter: #(cv2.KalmanFilter)
         lk_params = dict(winSize=(15, 15), maxLevel=2,
                          criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03), flags=0, minEigThreshold=0.001)
         prevLandmarks = [pts.getPoint() for pts in trackPoints]
+        # prevLandmarks = trackPoints
 
         newLandmarks, status, err = cv2.calcOpticalFlowPyrLK(prevFrame, currFrame, prevLandmarks,#np.array(prevLandmarks, dtype=np.float32)/prevLandmarks
                                                              np.array(currLandmarks, dtype=np.float64), **lk_params) #np.array(currLandmarks, dtype=np.float64)/None
@@ -84,9 +86,9 @@ class KalmanFilter: #(cv2.KalmanFilter)
                 point = (1 - alpha) * np.array(currLandmarks[i]) + alpha * newLandmarks[i]
                 point = min(max(point[0], 0), currFrame.shape[1] - 1), min(max(point[1], 0), currFrame.shape[0] - 1)
 
-                trackPoints[i].update(point) #(newLandmarks[i]+currLandmarks[i])/2 or point
+                trackPoints[i].update(point) #(newLandmarks[i]+currLandmarks[i])/2 or point or KalmanFilter(trackPoints[i]).update(point)
             else:
-                trackPoints[i].update(currLandmarks[i])
+                trackPoints[i].update(currLandmarks[i]) #KalmanFilter(trackPoints[i]).update(currLandmarks[i])
         
 
 
