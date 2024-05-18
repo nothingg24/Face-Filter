@@ -90,4 +90,4 @@ def track(option: Optional[str]='0'):
 
 
 if __name__ == "__main__":
-    track()
+    track(option=0)
