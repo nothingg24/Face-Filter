@@ -36,3 +36,4 @@ gdown
 onnx==1.16.0
 onnxruntime==1.17.3
 mediapipe==0.10.13
+filterpy==1.4.5
