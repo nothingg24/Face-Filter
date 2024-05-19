@@ -283,7 +283,7 @@ def detect(cfg: DictConfig, option: Optional[str] = None):
 
                     if VISUALIZE_LANDMARKS:
                         for tp in trackPoints:
-                            cv2.circle(frame, tuple(map(int, tp.getPoint())), 3, (0, 0, 255) if tp.isPredicted() else (0, 255, 0), cv2.FILLED)
+                            cv2.circle(frame, tuple(map(int, tp.getPoint())), 2, (0, 0, 255) if tp.isPredicted() else (0, 255, 0), cv2.FILLED)
                         cv2.imshow('landmark', frame)
                     else:
                         points3 = [tp.getPoint() for tp in trackPoints]
