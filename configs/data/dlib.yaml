@@ -1,7 +1,7 @@
 _target_: src.data.dlib_datamodule.DLIBDataModule
 # data_dir: ${paths.data_dir}/dlib
 data_dir: data/dlib
-train_val_test_split: [0.8, 0.1, 0.1]
+train_val_test_split: [0.8, 0.1, 0.1] #[0, 0, 1] for evaluation on 300W(Full)
 transform_train: default.yaml
 transform_val: default.yaml
 batch_size: 64 # 8/16/32/64/128
