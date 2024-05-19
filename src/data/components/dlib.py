@@ -5,7 +5,7 @@ from typing import Optional
 # import cv2
 import albumentations as A
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle, Rectangle
+# from matplotlib.patches import Circle, Rectangle
 # import PIL
 from PIL import Image, ImageDraw
 import torchvision.transforms.functional as TF
@@ -16,6 +16,7 @@ import os
 import tarfile
 from tqdm import tqdm
 import numpy as np
+from math import sqrt
 
 class DLIB(Dataset):
   def __init__(self, transform: Optional[A.Compose] = None):
@@ -118,6 +119,27 @@ class DLIB(Dataset):
     if self.img_labels is None:
       self.prepare_labels()
     return len(self.img_labels)
+  
+  def parse_roi_box_from_landmark(self, pts):
+      """calc roi box from landmark"""
+      x = [pt[0] for pt in pts]  # x-coordinates
+      y = [pt[1] for pt in pts]  # y-coordinates
+      bbox = [min(x), min(y), max(x), max(y)]
+      center = [(float(bbox[0]) + float(bbox[2])) / 2, (float(bbox[1]) + float(bbox[3])) / 2]
+      radius = max(float(bbox[2]) - float(bbox[0]), float(bbox[3]) - float(bbox[1])) / 2
+      bbox = [center[0] - radius, center[1] - radius, center[0] + radius, center[1] + radius]
+      
+      llength = sqrt((bbox[2] - bbox[0]) ** 2 + (bbox[3] - bbox[1]) ** 2)
+      center_x = (bbox[2] + bbox[0]) / 2
+      center_y = (bbox[3] + bbox[1]) / 2
+      
+      roi_box = [0] * 4
+      roi_box[0] = center_x - llength / 2
+      roi_box[1] = center_y - llength / 2
+      roi_box[2] = roi_box[0] + llength
+      roi_box[3] = roi_box[1] + llength
+      
+      return roi_box
 
   def __getitem__(self, index):
     if index < 0 or index >= len(self):
@@ -133,18 +155,26 @@ class DLIB(Dataset):
       bbox = self.img_labels.loc[index, 'top':'box_height']
       landmark = self.img_labels.iloc[index, -68:]
       image = Image.open(img_path).convert('RGB')
-      left, top, width, height = int(bbox['left']), int(bbox['top']), int(bbox['box_width']), int(bbox['box_height'])
-      right = left + width
-      lower = top + height
-      area = (left, top, right, lower)
+      roi_box = self.parse_roi_box_from_landmark(landmark)
+      area = (roi_box[0], roi_box[1], roi_box[2], roi_box[3])
+      # width = int(float(bbox['box_width']) + float(bbox['box_width']) * 0.1)
+      # height = int(float(bbox['box_height']) + float(bbox['box_height']) * 0.1)
+      # left = int(float(bbox['left']) - float(width) * 0.05)
+      # top = int(float(bbox['top']) - float(height) * 0.05)
+      # left, top, width, height = int(bbox['left']), int(bbox['top']), int(bbox['box_width']), int(bbox['box_height'])
+      # right = left + width
+      # lower = top + height
+      # area = (left, top, right, lower)
       image = image.crop(area)
 
       # image = np.asarray(image)
       keypoints = []
       for i in range(68):
-         x = int(landmark[i][0]) - int(bbox['left'])
-         y = int(landmark[i][1]) - int(bbox['top'])
-         keypoints.append((x, y))
+        #  x = int(landmark[i][0]) - int(bbox['left'])
+        #  y = int(landmark[i][1]) - int(bbox['top'])
+        x = int(landmark[i][0]) - int(roi_box[0])
+        y = int(landmark[i][1]) - int(roi_box[1])
+        keypoints.append((x, y))
       keypoints = np.array(keypoints)
       # image = TF.to_tensor(image)
       # image = image.permute(1,2,0)

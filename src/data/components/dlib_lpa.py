@@ -83,7 +83,7 @@ class DLIB_LPA(Dataset):
           self.prepare_labels()
       return len(self.img_labels)
 
-  def parse_roi_box_from_landmark(self, pts):
+  def parse_roi_box_from_landmark(self, pts: typing.List[typing.Tuple[int, int]])->typing.List[int]:
       """calc roi box from landmark"""
       x = [pt[0] for pt in pts]  # x-coordinates
       y = [pt[1] for pt in pts]  # y-coordinates
