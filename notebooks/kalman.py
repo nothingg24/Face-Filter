@@ -19,7 +19,7 @@ class KalmanFilter: #(cv2.KalmanFilter)
                                                 [0, 1, 0, self.deltaTime],
                                                 [0, 0, 1, 0],
                                                 [0, 0, 0, 1]], dtype=np.float64)
-        self.kalman.statePre = np.array([[self.point[0]], [self.point[1]], [1], [1]], dtype=np.float64)
+        self.kalman.statePre = np.array([[self.point[0]], [self.point[1]], [0], [0]], dtype=np.float64)
         self.kalman.statePost = np.array([[self.point[0]], [self.point[1]], [0], [0]], dtype=np.float64)
 
         cv2.setIdentity(self.kalman.measurementMatrix)
