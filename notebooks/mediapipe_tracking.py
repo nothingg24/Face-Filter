@@ -3,7 +3,8 @@ pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 from typing import Optional
 import numpy as np
 import cv2
-from notebooks.tracker import Tracker
+from notebooks.tracker_mp import Tracker
+from notebooks.kalman import KalmanFilter
 import notebooks.faceBlendCommon as fbc
 import mediapipe as mp
 
@@ -19,6 +20,8 @@ def track(option: Optional[str] = None):
     isFirstFrame = True
     detector = mp.solutions.face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5)
     face_mesh = mp.solutions.face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, refine_landmarks=True, min_detection_confidence=0.5, min_tracking_confidence=0.5)
+    # tracker1 = Tracker()
+    # tracker2 = Tracker()
     tracker = Tracker()
 
     while capture.isOpened():
@@ -48,12 +51,24 @@ def track(option: Optional[str] = None):
                     top_left = (x, y)
                     bottom_right = (x + w, y + h)
                     bbox_points = [top_left, bottom_right]
-                    bbox_points = tracker.track(img_frame, np.array(bbox_points))
-                    cv2.rectangle(frame, tuple(map(int, bbox_points[0])), tuple(map(int, bbox_points[1])), (0, 255, 0), 2)
+                    # bbox_points = tracker1.track(img_frame, np.array(bbox_points, dtype=np.float32))
+                    # cv2.rectangle(frame, (int(bbox_points[0][0]), int(bbox_points[0][1])), (int(bbox_points[1][0]), int(bbox_points[1][1])), (0, 255, 0), 2)
                     # cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
                     # face_cropped = img_frame[y:y+h, x:x+w]
-                    face_cropped = img_frame[int(bbox_points[0][1]):int(bbox_points[1][1]), int(bbox_points[0][0]):int(bbox_points[1][0])]
+                    # face_cropped = img_frame[int(bbox_points[0][1]):int(bbox_points[1][1]), int(bbox_points[0][0]):int(bbox_points[1][0])]
+
+                    trackBbox = []
+                    if len(trackBbox) == 0:
+                        trackBbox = [KalmanFilter(point) for point in bbox_points]
+                    else:
+                        KalmanFilter.trackpoints(img2GrayPrev, img2Gray, bbox_points, trackBbox)
+                    
+                    cv2.rectangle(frame, tuple(map(int, trackBbox[0].getPoint())), tuple(map(int, trackBbox[1].getPoint())), (0, 255, 0), 2)
+                    # cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+                    # face_cropped = img_frame[y:y+h, x:x+w]
+                    face_cropped = img_frame[int(trackBbox[0].getPoint()[1]):int(trackBbox[1].getPoint()[1]), int(trackBbox[0].getPoint()[0]):int(trackBbox[1].getPoint()[0])]
 
                     landmark_points_cropped = face_mesh.process(cv2.cvtColor(face_cropped, cv2.COLOR_BGR2RGB))
                     multi_face_landmarks = landmark_points_cropped.multi_face_landmarks
@@ -69,9 +84,18 @@ def track(option: Optional[str] = None):
                     landmark_points.append(face_landmarks_points)
 
                     points2 = landmark_points[0]
-                    points2 = tracker.track(img_frame, np.array(points2))
+
+                    img2Gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+                    if isFirstFrame:
+                        img2GrayPrev = np.copy(img2Gray)
+                        isFirstFrame = False
+
+                    points2 = tracker.track(img_frame, np.array(points2, dtype=np.float32))
                     for point in points2:
                         cv2.circle(frame, tuple(map(int, point)), radius=1, color=(0, 255, 0), thickness=2)
+
+                    img2GrayPrev = img2Gray
                     cv2.imshow('landmark', frame)
 
             # face_mesh.close()

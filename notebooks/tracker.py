@@ -54,28 +54,12 @@ class LKTracker:
             self.prev_frame = next_frame
             self.prev_points = new_detected_points
             return new_detected_points
+        
         new_points, status, error = cv2.calcOpticalFlowPyrLK(self.prev_frame, next_frame,
-                                                             self.prev_points.astype(np.float32),
-                                                             None, **lk_params)
-        if new_detected_points.shape[0]==68:
-            result = self.delta_fn(self.prev_points, new_detected_points, new_points)
-        else:
-            result = []
-            for i in range(0, len(status)):
-                if status[i]:
-                    sigma = 50
-                    if len(new_detected_points) > i and len(new_points) > i:
-                        d = cv2.norm(np.array(new_detected_points[i]) - new_points[i])
-                    alpha = math.exp(-d * d / sigma)
-                    point = (1 - alpha) * np.array(new_detected_points[i]) + alpha * new_points[i]
-                    point = min(max(point[0], 0), next_frame.shape[1] - 1), min(max(point[1], 0), next_frame.shape[0] - 1)
-                    # result[i] = point
-                    result.append(point)
-                else:
-                    # result[i] = new_detected_points
-                    result.append(new_detected_points)
-            result = np.array(result) 
-                    
+                                                                self.prev_points.astype(np.float32),
+                                                                None, **lk_params)
+        
+        result = self.delta_fn(self.prev_points, new_detected_points, new_points)
 
         self.prev_points = result
         self.prev_frame = next_frame.copy()
