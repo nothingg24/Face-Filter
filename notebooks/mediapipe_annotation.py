@@ -181,78 +181,78 @@ def detect(img_path: str)->None:
 
                 filters, multi_filter_runtime = load_filter('naruto')
 
-            for idx, filter in enumerate(filters):
-                filter_runtime = multi_filter_runtime[idx]
-                img1 = filter_runtime['img']
-                points1 = filter_runtime['points']
-                img1_alpha = filter_runtime['img_a']
+                for idx, filter in enumerate(filters):
+                    filter_runtime = multi_filter_runtime[idx]
+                    img1 = filter_runtime['img']
+                    points1 = filter_runtime['points']
+                    img1_alpha = filter_runtime['img_a']
 
-                if filter['morph']:
-                    hullIndex = filter_runtime['hullIndex']
-                    dt = filter_runtime['dt']
-                    hull1 = filter_runtime['hull']
-    
-                    # create copy of frame
-                    warped_img = np.copy(frame)
-    
-                    # Find convex hull
-                    hull2 = []
-                    for i in range(0, len(hullIndex)):
-                        hull2.append(points2[hullIndex[i][0]])
-    
-                    mask1 = np.zeros((warped_img.shape[0], warped_img.shape[1]), dtype=np.float32)
-                    mask1 = cv2.merge((mask1, mask1, mask1))
-                    img1_alpha_mask = cv2.merge((img1_alpha, img1_alpha, img1_alpha))
+                    if filter['morph']:
+                        hullIndex = filter_runtime['hullIndex']
+                        dt = filter_runtime['dt']
+                        hull1 = filter_runtime['hull']
+        
+                        # create copy of frame
+                        warped_img = np.copy(frame)
+        
+                        # Find convex hull
+                        hull2 = []
+                        for i in range(0, len(hullIndex)):
+                            hull2.append(points2[hullIndex[i][0]])
+        
+                        mask1 = np.zeros((warped_img.shape[0], warped_img.shape[1]), dtype=np.float32)
+                        mask1 = cv2.merge((mask1, mask1, mask1))
+                        img1_alpha_mask = cv2.merge((img1_alpha, img1_alpha, img1_alpha))
 
-                    # Warp the triangles
-                    for i in range(0, len(dt)):
-                        t1 = []
-                        t2 = []
-    
-                        for j in range(0, 3):
-                            t1.append(hull1[dt[i][j]])
-                            t2.append(hull2[dt[i][j]])
-    
-                        fbc.warpTriangle(img1, warped_img, t1, t2)
-                        fbc.warpTriangle(img1_alpha_mask, mask1, t1, t2)
-    
-                    # Blur the mask before blending
-                    mask1 = cv2.GaussianBlur(mask1, (3, 3), 10)
-    
-                    mask2 = (255.0, 255.0, 255.0) - mask1
-    
-                    # Perform alpha blending of the two images
-                    temp1 = np.multiply(warped_img, (mask1 * (1.0 / 255)))
-                    temp2 = np.multiply(frame, (mask2 * (1.0 / 255)))
-                    output = temp1 + temp2
+                        # Warp the triangles
+                        for i in range(0, len(dt)):
+                            t1 = []
+                            t2 = []
+        
+                            for j in range(0, 3):
+                                t1.append(hull1[dt[i][j]])
+                                t2.append(hull2[dt[i][j]])
+        
+                            fbc.warpTriangle(img1, warped_img, t1, t2)
+                            fbc.warpTriangle(img1_alpha_mask, mask1, t1, t2)
+        
+                        # Blur the mask before blending
+                        mask1 = cv2.GaussianBlur(mask1, (3, 3), 10)
+        
+                        mask2 = (255.0, 255.0, 255.0) - mask1
+        
+                        # Perform alpha blending of the two images
+                        temp1 = np.multiply(warped_img, (mask1 * (1.0 / 255)))
+                        temp2 = np.multiply(frame, (mask2 * (1.0 / 255)))
+                        output = temp1 + temp2
 
-                else:
-                    dst_points = [points2[int(list(points1.keys())[0])], points2[int(list(points1.keys())[1])]]
-                    tform = fbc.similarityTransform(list(points1.values()), dst_points)
-                    # Apply similarity transform to input image
-                    trans_img = cv2.warpAffine(img1, tform, (frame.shape[1], frame.shape[0]))
-                    trans_alpha = cv2.warpAffine(img1_alpha, tform, (frame.shape[1], frame.shape[0]))
-                    mask1 = cv2.merge((trans_alpha, trans_alpha, trans_alpha))
-    
-                    # Blur the mask before blending
-                    mask1 = cv2.GaussianBlur(mask1, (3, 3), 10)
-    
-                    mask2 = (255.0, 255.0, 255.0) - mask1
-    
-                    # Perform alpha blending of the two images
-                    temp1 = np.multiply(trans_img, (mask1 * (1.0 / 255)))
-                    temp2 = np.multiply(frame, (mask2 * (1.0 / 255)))
-                    output = temp1 + temp2
+                    else:
+                        dst_points = [points2[int(list(points1.keys())[0])], points2[int(list(points1.keys())[1])]]
+                        tform = fbc.similarityTransform(list(points1.values()), dst_points)
+                        # Apply similarity transform to input image
+                        trans_img = cv2.warpAffine(img1, tform, (frame.shape[1], frame.shape[0]))
+                        trans_alpha = cv2.warpAffine(img1_alpha, tform, (frame.shape[1], frame.shape[0]))
+                        mask1 = cv2.merge((trans_alpha, trans_alpha, trans_alpha))
+        
+                        # Blur the mask before blending
+                        mask1 = cv2.GaussianBlur(mask1, (3, 3), 10)
+        
+                        mask2 = (255.0, 255.0, 255.0) - mask1
+        
+                        # Perform alpha blending of the two images
+                        temp1 = np.multiply(trans_img, (mask1 * (1.0 / 255)))
+                        temp2 = np.multiply(frame, (mask2 * (1.0 / 255)))
+                        output = temp1 + temp2
 
-                frame = output = np.uint8(output)
+                    frame = output = np.uint8(output)
 
-                rgb_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                img = rgb_img
+                    rgb_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    img = rgb_img
 
     return img
 
 if __name__ == '__main__':
-    img = detect('IMG_0494.jpg')
+    img = detect('WIN_20240424_16_49_50_Pro.jpg')
     if VISUALIZE_LANDMARKS:
         cv2.imshow('Landmark', img)
         cv2.imwrite('result.png', img)

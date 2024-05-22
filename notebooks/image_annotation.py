@@ -23,7 +23,7 @@ import os
 import onnx, onnxruntime
 from notebooks.detect import Detection
 
-VISUALIZE_LANDMARKS = True
+VISUALIZE_LANDMARKS = False
 MODEL_OPTION = 2
 INFERENCE_MODE = 'onnx'
 
@@ -66,7 +66,7 @@ def visualize_bbox(img: Image, bbox: dict) -> Image:
 def visualize_landmarks(img: Image, landmarks: np.array) -> Image:
     draw = ImageDraw.Draw(img)
     for point in landmarks:
-        draw.ellipse(xy=(point[0] - 5, point[1] - 5, point[0] + 5, point[1] + 5), fill=(0, 255, 0))
+        draw.ellipse(xy=(point[0] - 2, point[1] - 2, point[0] + 2, point[1] + 2), fill=(0, 0, 255))
     return img
 
 def get_filter_landmarks(annotation_path: str) -> np.array:
