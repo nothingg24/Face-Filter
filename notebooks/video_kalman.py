@@ -21,7 +21,7 @@ import notebooks.faceBlendCommon as fbc
 import csv, gdown, os, onnx, onnxruntime
 from notebooks.detect import Detection
 
-VISUALIZE_LANDMARKS = True
+VISUALIZE_LANDMARKS = False
 INFERENCE_MODE = 'onnx'
 MODEL_OPTION = 2
 
@@ -110,7 +110,7 @@ def find_convex_hull(points: np.array):
  
     return hull, hullIndex
 
-def load_filter(filter_name: str = 'naruto'):
+def load_filter(filter_name: str = 'squid_game_front_man'):
     filters = filters_config[filter_name]
     multi_filter_runtime = []
 
