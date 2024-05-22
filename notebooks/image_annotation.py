@@ -30,7 +30,45 @@ INFERENCE_MODE = 'onnx'
 filters_config = {
     'naruto':
         [{'path': 'filter/image/naruto.png',
-          'anno_path': 'filter/annotations/naruto.csv', #naruto.svg
+          'anno_path': 'filter/annotations/naruto.csv',
+          'morph': True, 'animated': False, 'has_alpha': True
+        }],
+    'anime':
+        [{'path': 'filter/image/anime.png',
+          'anno_path': 'filter/annotations/anime.csv',
+          'morph': True, 'animated': False, 'has_alpha': True
+        }],
+    'anonymous':
+        [{'path': 'filter/image/anonymous.png',
+          'anno_path': 'filter/annotations/anonymous.csv',
+          'morph': True, 'animated': False, 'has_alpha': True
+        }],
+    'cat':
+        [{'path': 'filter/image/cat-ears.png',
+          'anno_path': 'filter/annotations/cat-ears.csv',
+          'morph': False, 'animated': False, 'has_alpha': True
+        },
+        {'path': 'filter/image/cat-nose.png',
+          'anno_path': 'filter/annotations/cat-nose.csv',
+          'morph': False, 'animated': False, 'has_alpha': True
+        }],
+    'dog':
+        [{'path': 'filter/image/cat-ears.png',
+          'anno_path': 'filter/annotations/dog-ears.csv',
+          'morph': False, 'animated': False, 'has_alpha': True
+        },
+        {'path': 'filter/image/cat-nose.png',
+          'anno_path': 'filter/annotations/dog-nose.csv',
+          'morph': False, 'animated': False, 'has_alpha': True
+        }],
+    'joker':
+        [{'path': 'filter/image/jason-joker.png',
+          'anno_path': 'filter/annotations/jason-joker.csv',
+          'morph': True, 'animated': False, 'has_alpha': True
+        }],
+    'squid_game_front_man':
+        [{'path': 'filter/image/squid_game_front_man.png',
+          'anno_path': 'filter/annotations/squid_game_front_man.csv',
           'morph': True, 'animated': False, 'has_alpha': True
         }],
 }
@@ -244,7 +282,7 @@ def detect(img_path: str, cfg: DictConfig) -> None:
             landmarks = np.vstack([landmarks, np.array([landmarks[16][0], int(bbox['y'])])])
             points2 = landmarks.tolist()
 
-            filters, multi_filter_runtime = load_filter('naruto')
+            filters, multi_filter_runtime = load_filter('anonymous')
 
             for idx, filter in enumerate(filters):
                 filter_runtime = multi_filter_runtime[idx]
