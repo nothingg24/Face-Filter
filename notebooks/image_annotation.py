@@ -23,7 +23,7 @@ import os
 import onnx, onnxruntime
 from notebooks.detect import Detection
 
-VISUALIZE_LANDMARKS = False
+VISUALIZE_LANDMARKS = True
 MODEL_OPTION = 2
 INFERENCE_MODE = 'onnx'
 
@@ -364,7 +364,7 @@ if __name__ == "__main__":
     
     @hydra.main(version_base=None, config_path=config_path, config_name="dlib.yaml")
     def main(cfg: DictConfig):
-        image = detect(img_path='WIN_20240424_16_49_50_Pro.jpg', cfg=cfg)
+        image = detect(img_path='WIN_20240526_18_10_33_Pro.jpg', cfg=cfg)
         if VISUALIZE_LANDMARKS:
             image.save('result.png')
             plt.imshow(image)
