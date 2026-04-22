@@ -57,11 +57,6 @@ def draw_batch(images, targets, preds) -> torch.Tensor:
 
     # set an empty list
     images_to_save = []
-    
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    # images = images.to(device)
-    # targets = targets.to(device)
-    # preds = preds.to(device)
 
     # loop through each sample in batch
     for i, t, p in zip(images, targets, preds):
@@ -157,7 +152,6 @@ class DLIBLitModule(LightningModule):
         x, y = batch
         preds = self.forward(x)
         loss = self.criterion(preds, y)
-        # preds = torch.argmax(logits, dim=1)
         return loss, preds, y, x
 
     def training_step(self, batch: Any, batch_idx: int):
@@ -271,23 +265,3 @@ if __name__ == "__main__":
     from omegaconf import DictConfig
     import hydra
 
-    pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
-
-    def test_net(cfg):
-        net = hydra.utils.instantiate(cfg.model.net)
-        print("*"*20+" net "+"*"*20, "\n", net)
-        output = net(torch.randn(16, 3, 224, 224))
-        print("output", output.shape)
-
-    def test_module(cfg):
-        module = hydra.utils.instantiate(cfg.model)
-        output = module(torch.randn(16, 3, 224, 224))
-        print("module output", output.shape)
-
-    @hydra.main(version_base=None, config_path='../../configs/', config_name="train.yaml")
-    def main(cfg: DictConfig):
-        print(cfg)
-        test_net(cfg)
-        test_module(cfg)
-
-    main()
